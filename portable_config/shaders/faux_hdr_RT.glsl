@@ -2,8 +2,7 @@
 
 
 //!PARAM SOFT
-//!TYPE DEFINE
-//!DESC int
+//!TYPE int
 //!MINIMUM 0
 //!MAXIMUM 1
 1
@@ -20,18 +19,25 @@
 //!MAXIMUM 200.0
 40.0
 
+//!PARAM SHIFT
+//!TYPE float
+//!MINIMUM 0.0
+//!MAXIMUM 1.0
+0.45
+
+
 //!HOOK MAIN
 //!BIND LUMA
-//!DESC [faux_hdr_RT] step1
+//!DESC [faux_hdr_RT] ref_pre
 //!SAVE BW
 
-const float pi = 3.141592654;
+const float pi = 3.141592653589793;
 
 vec4 hook() {
+
 	vec2 dir = vec2(1.0, 0.0);
 	float avg  = 0.0;
 	float coefficientSum = 0.0;
-	float numBlurPixelsPerSide = RAD;
 	float sigma = SIGMA;
 
 	vec3 incrementalGaussian;
@@ -43,7 +49,7 @@ vec4 hook() {
 	coefficientSum += incrementalGaussian.x;
 	incrementalGaussian.xy *= incrementalGaussian.yz;
 
-	for (float i = 1.0; i <= numBlurPixelsPerSide; i++) {
+	for (float i = 1.0; i <= RAD; i++) {
 		avg += (1.0 - LUMA_texOff(-i * dir).x) * incrementalGaussian.x;
 		avg += (1.0 - LUMA_texOff( i * dir).x) * incrementalGaussian.x;
 		coefficientSum += 2.0 * incrementalGaussian.x;
@@ -51,27 +57,27 @@ vec4 hook() {
 	}
 
 	return vec4(avg / coefficientSum);
+
 }
 
 //!HOOK MAIN
 //!BIND HOOKED
 //!BIND LUMA
 //!BIND BW
-//!DESC [faux_hdr_RT] step2
+//!DESC [faux_hdr_RT] mix
 
-#define SoftMode 						SOFT
 #define BlendOverlay(base, blend) 		mix(2.0 * base * blend, 1.0 - 2.0 * (1.0 - base) * (1.0 - blend), step(0.5, base))
 #define BlendLinearLight(base, blend) 	mix(max(base + 2.0 * blend - 1.0, 0.0), min(base + 2.0 * (blend - 0.5), 1.0), step(0.5, blend))
 #define BlendSoftLight(base, blend) 	mix(2.0 * base * blend + base * base * (1.0 - 2.0 * blend), sqrt(base) * (2.0 * blend - 1.0) + 2.0 * base * (1.0 - blend), step(0.5, blend))
 
-const float pi = 3.141592654;
+const float pi = 3.141592653589793;
 
 vec4 hook() {
+
 	vec2 dir = vec2(0.0, 1.0);
 	vec3 avg  = vec3(0.0);
 	float coefficientSum = 0.0;
-	float numBlurPixelsPerSide = 200.0/2.0;
-	float sigma = 40.0;
+	float sigma = SIGMA;
 
 	vec3 incrementalGaussian;
 	incrementalGaussian.x = 1.0 / (sqrt(2.0 * pi) * sigma);
@@ -82,7 +88,7 @@ vec4 hook() {
 	coefficientSum += incrementalGaussian.x;
 	incrementalGaussian.xy *= incrementalGaussian.yz;
  
-	for (float i = 1.0; i <= numBlurPixelsPerSide; i++) {
+	for (float i = 1.0; i <= RAD; i++) {
 		avg += BW_texOff(-i * dir).xyz * incrementalGaussian.x;
 		avg += BW_texOff( i * dir).xyz * incrementalGaussian.x;
 		coefficientSum += 2.0 * incrementalGaussian.x;
@@ -97,12 +103,13 @@ vec4 hook() {
 	obw = mix(max(obw, o.rgb), obw, smoothstep(y, 1.0, 1.0 - y - bw.x));
 	obw = mix(min(obw, o.rgb), obw, 1.0 - smoothstep(0.0, y, bw.x - (1.0 - y)));
 
-#if (SoftMode == 1)
-	o.xyz = mix(BlendSoftLight(o.xyz, obw), obw, 0.45);
-#elif (SoftMode == 0)
-	o.xyz = mix(BlendLinearLight(obw, o.xyz), obw, 0.45);
-#endif
+	if (SOFT == 1) {
+	o.xyz = mix(BlendSoftLight(o.xyz, obw), obw, SHIFT);
+	} else if (SOFT == 0) {
+	o.xyz = mix(BlendLinearLight(o.xyz, obw), obw, SHIFT);
+	}
 
 	return o;
+
 }
 
