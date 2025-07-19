@@ -22,6 +22,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+
 //!PARAM chroma_offset_x
 //!TYPE float
 0.0
@@ -337,7 +338,7 @@ vec4 hook() {
 //!BIND CHROMA
 //!BIND LUMA
 //!DESC [CfL_Prediction_RT] (Smoothing Chroma)
-//!WHEN SMTH 0 >
+//!WHEN SMTH
 
 float comp_w(vec2 spatial_distance, float intensity_distance) {
     return max(100.0 * exp(-distance_coeff * pow(length(spatial_distance), 2.0) - intensity_coeff * pow(intensity_distance, 2.0)), 1e-32);

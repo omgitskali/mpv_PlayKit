@@ -7,10 +7,11 @@
 //!MAXIMUM 100.0
 0.0
 
-//!DESC [zoom_RT]
+
 //!HOOK MAINPRESUB
 //!BIND HOOKED
-//!WHEN Z 0.0 = !
+//!DESC [zoom_RT]
+//!WHEN Z
 
 vec4 hook() {
 

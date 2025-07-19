@@ -25,7 +25,7 @@
 //!MAXIMUM 256
 256
 
-//!DESC [FGCine_freebdl_RT] MAINPRESUB
+
 //!HOOK MAINPRESUB
 //!BIND HOOKED
 //!BIND MPVLUT1
@@ -36,7 +36,8 @@
 //!BIND MPVLUT6
 //!BIND MPVLUT7
 //!BIND MPVLUT8
-//!WHEN CLUT 0 > PASS 1 == *
+//!DESC [FGCine_freebdl_RT] main
+//!WHEN CLUT PASS 1 == *
 
 vec4 hook(){
 
@@ -81,8 +82,6 @@ vec4 hook(){
 
 }
 
-
-//!DESC [FGCine_freebdl_RT] OUTPUT
 //!HOOK OUTPUT
 //!BIND HOOKED
 //!BIND MPVLUT1
@@ -93,7 +92,8 @@ vec4 hook(){
 //!BIND MPVLUT6
 //!BIND MPVLUT7
 //!BIND MPVLUT8
-//!WHEN CLUT 0 > PASS 2 == *
+//!DESC [FGCine_freebdl_RT] output
+//!WHEN CLUT PASS 2 == *
 
 vec4 hook(){
 
@@ -137,7 +137,6 @@ vec4 hook(){
 	return vec4(lut_result.rgb, original_color.a);
 
 }
-
 
 //!TEXTURE MPVLUT1
 //!SIZE 25 25 25

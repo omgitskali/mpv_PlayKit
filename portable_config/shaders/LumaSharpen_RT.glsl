@@ -12,6 +12,7 @@
     This is similar to using Unsharp Mask in Photoshop.
 */
 
+
 //!PARAM SHARP
 //!TYPE float
 //!MINIMUM 0.1

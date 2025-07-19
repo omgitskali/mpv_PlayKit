@@ -1,43 +1,36 @@
 // 文档 https://github.com/hooke007/MPV_lazy/wiki/4_GLSL
 
 
-//!PARAM ttl_f
-//!TYPE float
-//!MINIMUM 0.1
-//!MAXIMUM 3.0
-1.0
-
-//!PARAM Y_f
+//!PARAM TTL
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 3.0
 1.0
 
-//!PARAM I_f
+//!PARAM Y
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 3.0
 1.0
 
-//!PARAM Q_f
+//!PARAM I
+//!TYPE float
+//!MINIMUM 0.0
+//!MAXIMUM 3.0
+1.0
+
+//!PARAM Q
 //!TYPE float
 //!MINIMUM -1.0
 //!MAXIMUM 3.0
 1.0
-
-//!PARAM CLAMP
-//!TYPE DEFINE
-//!DESC int
-//!MINIMUM 0
-//!MAXIMUM 1
-0
 
 
 //!HOOK MAIN
 //!BIND HOOKED
 //!BIND LUMA
 //!DESC [eq_yiq_RT]
-//!WHEN ttl_f 1.0 == ! Y_f 1.0 == ! + I_f 1.0 == ! + Q_f 1.0 == ! +
+//!WHEN TTL 1.0 == ! Y 1.0 == ! + I 1.0 == ! + Q 1.0 == ! +
 
 const mat3 RGBtoYIQ = mat3(
 	0.299,     0.587,     0.114,
@@ -51,20 +44,20 @@ const mat3 YIQtoRGB = mat3(
 	1.0, -1.10817732668266195230,  1.70506455991918171491
 );
 
-vec3 offset = vec3(Y_f, I_f, Q_f) * ttl_f;
+vec3 offset = vec3(Y, I, Q) * TTL;
 
 vec4 hook()
 {
+
 	vec4 color = HOOKED_texOff(vec2(0.0, 0.0));
+
 	color.rgb *= RGBtoYIQ;
 	color.r = pow(abs(color.r), offset.x);
 	color.gb *= offset.yz;
 	color.rgb *= YIQtoRGB;
-
-#if (CLAMP == 1)
 	color.rgb = clamp(color.rgb, 0.0, 1.0);
-#endif
 
 	return color;
+
 }
 

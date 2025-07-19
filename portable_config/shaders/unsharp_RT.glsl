@@ -13,23 +13,23 @@
 //!MAXIMUM 10.0
 1.0
 
-//!DESC [unsharp_RT]
+
 //!HOOK SCALED
 //!BIND HOOKED
-//!WHEN SHARP 0.0 = !
+//!DESC [unsharp_RT]
+//!WHEN SHARP
 
 #define effect_width   WIDTH
 #define coeff_blur     SHARP
 
 #define coeff_orig (1 + coeff_blur)
-
 #define Src(a,b) HOOKED_texOff(vec2(a,b))
 #define dx (effect_width)
 #define dy (effect_width)
 
 vec4 hook()
 {
-	
+
 	// Retrieves the original pixel
 	vec4 orig = Src(0,0);
 
@@ -54,7 +54,7 @@ vec4 hook()
 
 	// The blurred image is substracted from the origginal image
 	vec4 corr = coeff_orig*orig - coeff_blur*blur;
-
 	return corr;
+
 }
 

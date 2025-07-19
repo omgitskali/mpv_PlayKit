@@ -22,7 +22,7 @@
 //!MAXIMUM 1.0
 0.96
 
-//!PARAM Bz
+//!PARAM BZ
 //!TYPE float
 //!MINIMUM 0.1
 //!MAXIMUM 1.0
@@ -77,8 +77,8 @@ vec4 hook() {
 	vec2 dist_vec = (pos - center) * vec2(aspect_ratio, 1.0);
 	float distance = length(dist_vec);
 	float effective_radius = D * min(1.0, aspect_ratio) / 2.0;
-	float inner_radius = effective_radius * (1.0 - Bz * 0.1);
-	float outer_radius = effective_radius * (1.0 + Bz * 0.1);
+	float inner_radius = effective_radius * (1.0 - BZ * 0.1);
+	float outer_radius = effective_radius * (1.0 + BZ * 0.1);
 	float alpha = smoothstep(outer_radius, inner_radius, distance);
 	vec4 color = HOOKED_tex(pos);
 	color.rgb *= alpha;

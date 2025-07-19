@@ -1,29 +1,29 @@
 // 文档 https://github.com/hooke007/MPV_lazy/wiki/4_GLSL
 
 
-//!PARAM Rp
+//!PARAM R
 //!TYPE float
-//!MINIMUM -1.0
-//!MAXIMUM 1.0
+//!MINIMUM -100.0
+//!MAXIMUM 100.0
 0.0
 
-//!PARAM Gp
+//!PARAM G
 //!TYPE float
-//!MINIMUM -1.0
-//!MAXIMUM 1.0
+//!MINIMUM -100.0
+//!MAXIMUM 100.0
 0.0
 
-//!PARAM Bp
+//!PARAM B
 //!TYPE float
-//!MINIMUM -1.0
-//!MAXIMUM 1.0
+//!MINIMUM -100.0
+//!MAXIMUM 100.0
 0.0
 
 
-//!DESC [eq_rgb_RT]
 //!HOOK MAIN
 //!BIND HOOKED
-//!WHEN Rp 0.0 == ! Gp 0.0 == ! + Bp 0.0 == ! +
+//!DESC [eq_rgb_RT]
+//!WHEN R G + B +
 
 vec4 hook() {
 
@@ -31,9 +31,9 @@ vec4 hook() {
 	float r = texcolor.r;
 	float g = texcolor.g;
 	float b = texcolor.b;
-	r += Rp;
-	g += Gp;
-	b += Bp;
+	r += (R / 100.0);
+	g += (G / 100.0);
+	b += (B / 100.0);
 	vec3 rgb = vec3(r, g, b);
 
 	return vec4(rgb, texcolor.a); 

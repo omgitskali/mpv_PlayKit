@@ -14,10 +14,11 @@
 //!MAXIMUM 2
 1
 
+
 //!HOOK OUTPUT
 //!BIND HOOKED
 //!DESC [mirror_RT]
-//!WHEN REF 0 >
+//!WHEN REF
 
 vec4 hook() {
 

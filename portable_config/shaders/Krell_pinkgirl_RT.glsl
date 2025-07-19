@@ -25,11 +25,12 @@
 //!MAXIMUM 256
 256
 
-//!DESC [Krell_pinkgirl_RT] MAINPRESUB
+
 //!HOOK MAINPRESUB
 //!BIND HOOKED
 //!BIND MPVLUT1
-//!WHEN CLUT 0 > PASS 1 == *
+//!DESC [Krell_pinkgirl_RT] main
+//!WHEN CLUT PASS 1 == *
 
 vec4 hook(){
 
@@ -60,12 +61,11 @@ vec4 hook(){
 
 }
 
-
-//!DESC [Krell_pinkgirl_RT] OUTPUT
 //!HOOK OUTPUT
 //!BIND HOOKED
 //!BIND MPVLUT1
-//!WHEN CLUT 0 > PASS 2 == *
+//!DESC [Krell_pinkgirl_RT] output
+//!WHEN CLUT PASS 2 == *
 
 vec4 hook(){
 
@@ -95,7 +95,6 @@ vec4 hook(){
 	return vec4(lut_result.rgb, original_color.a);
 
 }
-
 
 //!TEXTURE MPVLUT1
 //!SIZE 17 17 17

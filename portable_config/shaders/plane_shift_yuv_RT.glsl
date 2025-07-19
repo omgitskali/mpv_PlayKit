@@ -1,27 +1,27 @@
 // 文档 https://github.com/hooke007/MPV_lazy/wiki/4_GLSL
 
 
-//!PARAM Yx
+//!PARAM YX
 //!TYPE float
 0.0
 
-//!PARAM Yy
+//!PARAM YY
 //!TYPE float
 0.0
 
-//!PARAM Ux
+//!PARAM UX
 //!TYPE float
 0.0
 
-//!PARAM Uy
+//!PARAM UY
 //!TYPE float
 0.0
 
-//!PARAM Vx
+//!PARAM VX
 //!TYPE float
 0.0
 
-//!PARAM Vy
+//!PARAM VY
 //!TYPE float
 0.0
 
@@ -29,15 +29,15 @@
 //!HOOK NATIVE
 //!BIND HOOKED
 //!DESC [plane_shift_yuv_RT]
-//!WHEN Yx Yy + Ux + Uy + Vx + Vy +
+//!WHEN YX YY + UX + UY + VX + VY +
 
 vec4 hook() {
 
 	vec2 pos = HOOKED_pos;
 	vec2 pixel_size = 1.0 / HOOKED_size;
-	vec2 pos_y = vec2(pos.x - Yx * pixel_size.x, pos.y - Yy * pixel_size.y);
-	vec2 pos_u = vec2(pos.x - Ux * pixel_size.x, pos.y - Uy * pixel_size.y);
-	vec2 pos_v = vec2(pos.x - Vx * pixel_size.x, pos.y - Vy * pixel_size.y);
+	vec2 pos_y = vec2(pos.x - YX * pixel_size.x, pos.y - YY * pixel_size.y);
+	vec2 pos_u = vec2(pos.x - UX * pixel_size.x, pos.y - UY * pixel_size.y);
+	vec2 pos_v = vec2(pos.x - VX * pixel_size.x, pos.y - VY * pixel_size.y);
 
 	bool all_out = true;
 	all_out = all_out && !(pos_y.x >= 0.0 && pos_y.x <= 1.0 && pos_y.y >= 0.0 && pos_y.y <= 1.0);

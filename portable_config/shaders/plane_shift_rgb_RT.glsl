@@ -1,27 +1,27 @@
 // 文档 https://github.com/hooke007/MPV_lazy/wiki/4_GLSL
 
 
-//!PARAM Rx
+//!PARAM RX
 //!TYPE float
 0.0
 
-//!PARAM Ry
+//!PARAM RY
 //!TYPE float
 0.0
 
-//!PARAM Gx
+//!PARAM GX
 //!TYPE float
 0.0
 
-//!PARAM Gy
+//!PARAM GY
 //!TYPE float
 0.0
 
-//!PARAM Bx
+//!PARAM BX
 //!TYPE float
 0.0
 
-//!PARAM By
+//!PARAM BY
 //!TYPE float
 0.0
 
@@ -29,15 +29,15 @@
 //!HOOK MAINPRESUB
 //!BIND HOOKED
 //!DESC [plane_shift_rgb_RT]
-//!WHEN Rx Ry + Gx + Gy + Bx + By +
+//!WHEN RX RY + GX + GY + BX + BY +
 
 vec4 hook() {
 
 	vec2 pos = HOOKED_pos;
 	vec2 pixel_size = 1.0 / HOOKED_size;
-	vec2 pos_r = vec2(pos.x - Rx * pixel_size.x, pos.y - Ry * pixel_size.y);
-	vec2 pos_g = vec2(pos.x - Gx * pixel_size.x, pos.y - Gy * pixel_size.y);
-	vec2 pos_b = vec2(pos.x - Bx * pixel_size.x, pos.y - By * pixel_size.y);
+	vec2 pos_r = vec2(pos.x - RX * pixel_size.x, pos.y - RY * pixel_size.y);
+	vec2 pos_g = vec2(pos.x - GX * pixel_size.x, pos.y - GY * pixel_size.y);
+	vec2 pos_b = vec2(pos.x - BX * pixel_size.x, pos.y - BY * pixel_size.y);
 	float r = 0.0;
 	float g = 0.0;
 	float b = 0.0;

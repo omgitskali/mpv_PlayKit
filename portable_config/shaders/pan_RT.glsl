@@ -13,10 +13,11 @@
 //!MAXIMUM 100.0
 0.0
 
-//!DESC [pan_RT]
+
 //!HOOK MAINPRESUB
 //!BIND HOOKED
-//!WHEN X 0.0 = ! Y 0.0 = ! +
+//!DESC [pan_RT]
+//!WHEN X Y +
 
 vec4 hook()
 {

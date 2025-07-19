@@ -8,25 +8,23 @@
 1
 
 //!PARAM MODE
-//!DESC int
-//!TYPE DEFINE
+//!TYPE int
 //!MINIMUM 1
 //!MAXIMUM 3
 2
 
 //!PARAM U
-//!DESC int
-//!TYPE DEFINE
+//!TYPE int
 //!MINIMUM 0
 //!MAXIMUM 1
 1
 
 //!PARAM V
-//!DESC int
-//!TYPE DEFINE
+//!TYPE int
 //!MINIMUM 0
 //!MAXIMUM 1
 1
+
 
 //!HOOK LUMA
 //!BIND HOOKED
@@ -34,15 +32,19 @@
 //!WHEN Y 0 ==
 
 vec4 hook() {
+
 	vec4 color = HOOKED_texOff(0.0);
-#if (MODE == 1)
-	color.x = 0.0;
-#elif (MODE == 2)
+
+	if (MODE == 1) {
+		color.x = 0.0;
+	} else if (MODE == 2) {
 	color.x = 0.5;
-#elif (MODE == 3)
+	} else if (MODE == 3) {
 	color.x = 1.0;
-#endif
+	}
+
 	return color;
+
 }
 
 //!HOOK CHROMA
@@ -51,13 +53,17 @@ vec4 hook() {
 //!WHEN U 0 == V 0 == +
 
 vec4 hook() {
+
 	vec4 color = HOOKED_texOff(0.0);
-#if (U == 0)
+
+	if (U == 0) {
 	color.x = 0.5;
-#endif
-#if (V == 0)
+	}
+	if (V == 0) {
 	color.y = 0.5;
-#endif
+	}
+
 	return color;
+
 }
 
