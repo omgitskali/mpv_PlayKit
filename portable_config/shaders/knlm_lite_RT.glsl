@@ -3,7 +3,7 @@
 
 //!PARAM STR
 //!TYPE float
-//!MINIMUM 0.01
+//!MINIMUM 0.0
 //!MAXIMUM 0.2
 0.05
 
@@ -12,6 +12,7 @@
 //!BIND HOOKED
 //!DESC [knlm_lite_RT] low-pre
 //!SAVE LUMA_LOW_H
+//!WHEN STR
 
 #define KERNEL_SIZE 9
 const float kernel[9] = float[9](
@@ -37,6 +38,7 @@ vec4 hook() {
 //!BIND LUMA_LOW_H
 //!DESC [knlm_lite_RT] low
 //!SAVE LUMA_LOW
+//!WHEN STR
 
 #define KERNEL_SIZE 9
 const float kernel[9] = float[9](
@@ -62,6 +64,7 @@ vec4 hook() {
 //!BIND LUMA_LOW
 //!DESC [knlm_lite_RT] high
 //!SAVE LUMA_HIGH
+//!WHEN STR
 
 vec4 hook() {
 
@@ -77,6 +80,7 @@ vec4 hook() {
 //!BIND LUMA_HIGH
 //!DESC [knlm_lite_RT] high-dn
 //!SAVE LUMA_HIGH_DN
+//!WHEN STR
 
 #define PATCH_SIZE   5
 #define SEARCH_RANGE 7
@@ -127,6 +131,7 @@ vec4 hook() {
 //!BIND LUMA_LOW
 //!BIND LUMA_HIGH_DN
 //!DESC [knlm_lite_RT] merge
+//!WHEN STR
 
 vec4 hook() {
 

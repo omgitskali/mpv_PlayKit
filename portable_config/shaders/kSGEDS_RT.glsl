@@ -13,13 +13,13 @@ LICENSE:
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 2.0
-0.5
+1.0
 
 //!PARAM ET
 //!TYPE float
-//!MINIMUM 32.0
+//!MINIMUM 0.0
 //!MAXIMUM 255.0
-64.0
+16.0
 
 
 //!HOOK SCALED
