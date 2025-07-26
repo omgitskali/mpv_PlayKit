@@ -48,16 +48,16 @@ LICENSE:
 0.0
 
 
-//!HOOK NATIVE
+//!HOOK LUMA
 //!BIND HOOKED
 //!SAVE RG11
 //!DESC [FineSharp_RT] RemoveGrain11
 //!WHEN SSTR
+//!COMPONENTS 1
 
 vec4 hook() {
 
-	vec4 o = HOOKED_texOff(vec2(0.0));
-	float luma = o.r;
+	float luma = HOOKED_texOff(vec2(0.0)).r;
 
 	luma += luma;
 	luma += HOOKED_texOff(vec2( 0.0, -1.0)).r;
@@ -71,16 +71,16 @@ vec4 hook() {
 	luma += HOOKED_texOff(vec2( 1.0,  1.0)).r;
 	luma *= 0.0625;
 
-	return vec4(luma, o.gb, o.a);
+	return vec4(luma, 0.0, 0.0, 1.0);
 
 }
 
-//!HOOK NATIVE
+//!HOOK LUMA
 //!BIND RG11
-//!BIND HOOKED
 //!SAVE RG4
 //!DESC [FineSharp_RT] RemoveGrain4
 //!WHEN SSTR
+//!COMPONENTS 1
 
 void sort(inout float a1, inout float a2) {
 	float t = min(a1, a2);
@@ -124,17 +124,18 @@ vec4 hook() {
 	float t9 = RG11_texOff(vec2( 1.0,  1.0)).r;
 
 	float median_luma = median9(t1, t2, t3, t4, t5, t6, t7, t8, t9);
-	vec4 orig = HOOKED_texOff(vec2(0.0));
 
-	return vec4(median_luma, orig.gb, orig.r);
+	return vec4(median_luma, 0.0, 0.0, 1.0);
 
 }
 
-//!HOOK NATIVE
+//!HOOK LUMA
 //!BIND RG4
+//!BIND HOOKED
 //!SAVE FSPA
 //!DESC [FineSharp_RT] part A
 //!WHEN SSTR
+//!COMPONENTS 1
 
 float SharpDiff(float denoised_luma, float original_luma) {
 	float t = original_luma - denoised_luma;
@@ -145,37 +146,37 @@ float SharpDiff(float denoised_luma, float original_luma) {
 
 vec4 hook() {
 
-	vec4 c_center = RG4_texOff(vec2(0.0));
-	float denoised_luma = c_center.r;
-	float original_luma = c_center.a;
+	float denoised_luma = RG4_texOff(vec2(0.0)).r;
+	float original_luma = HOOKED_texOff(vec2(0.0)).r;
 
 	float sd = SharpDiff(denoised_luma, original_luma);
 	float luma_A = original_luma + sd;
 
 	sd += sd;
-	sd += SharpDiff(RG4_texOff(vec2( 0.0, -1.0)).r, RG4_texOff(vec2( 0.0, -1.0)).a);
-	sd += SharpDiff(RG4_texOff(vec2(-1.0,  0.0)).r, RG4_texOff(vec2(-1.0,  0.0)).a);
-	sd += SharpDiff(RG4_texOff(vec2( 1.0,  0.0)).r, RG4_texOff(vec2( 1.0,  0.0)).a);
-	sd += SharpDiff(RG4_texOff(vec2( 0.0,  1.0)).r, RG4_texOff(vec2( 0.0,  1.0)).a);
+	sd += SharpDiff(RG4_texOff(vec2( 0.0, -1.0)).r, HOOKED_texOff(vec2(0.0, -1.0)).r);
+	sd += SharpDiff(RG4_texOff(vec2(-1.0,  0.0)).r, HOOKED_texOff(vec2(-1.0, 0.0)).r);
+	sd += SharpDiff(RG4_texOff(vec2( 1.0,  0.0)).r, HOOKED_texOff(vec2(1.0, 0.0)).r);
+	sd += SharpDiff(RG4_texOff(vec2( 0.0,  1.0)).r, HOOKED_texOff(vec2(0.0, 1.0)).r);
 
 	sd += sd;
-	sd += SharpDiff(RG4_texOff(vec2(-1.0, -1.0)).r, RG4_texOff(vec2(-1.0, -1.0)).a);
-	sd += SharpDiff(RG4_texOff(vec2( 1.0, -1.0)).r, RG4_texOff(vec2( 1.0, -1.0)).a);
-	sd += SharpDiff(RG4_texOff(vec2(-1.0,  1.0)).r, RG4_texOff(vec2(-1.0,  1.0)).a);
-	sd += SharpDiff(RG4_texOff(vec2( 1.0,  1.0)).r, RG4_texOff(vec2( 1.0,  1.0)).a);
+	sd += SharpDiff(RG4_texOff(vec2(-1.0, -1.0)).r, HOOKED_texOff(vec2(-1.0, -1.0)).r);
+	sd += SharpDiff(RG4_texOff(vec2( 1.0, -1.0)).r, HOOKED_texOff(vec2(1.0, -1.0)).r);
+	sd += SharpDiff(RG4_texOff(vec2(-1.0,  1.0)).r, HOOKED_texOff(vec2(-1.0, 1.0)).r);
+	sd += SharpDiff(RG4_texOff(vec2( 1.0,  1.0)).r, HOOKED_texOff(vec2(1.0, 1.0)).r);
 
 	sd *= 0.0625;
 	luma_A -= CSTR * sd;
 
-	return vec4(luma_A, c_center.gb, luma_A);
+	return vec4(luma_A, 0.0, 0.0, 1.0);
 
 }
 
-//!HOOK NATIVE
+//!HOOK LUMA
 //!BIND FSPA
 //!SAVE FSPB
 //!DESC [FineSharp_RT] part B
 //!WHEN SSTR
+//!COMPONENTS 1
 
 void sort(inout float a1, inout float a2) {
 	float t = min(a1, a2);
@@ -206,8 +207,7 @@ void sort9_partial2(inout float a1, inout float a2, inout float a3, inout float 
 
 vec4 hook() {
 
-	vec4 o = FSPA_texOff(vec2(0.0));
-	float luma_A = o.r;
+	float luma_A = FSPA_texOff(vec2(0.0)).r;
 
 	float t1 = FSPA_texOff(vec2(-1.0, -1.0)).r;
 	float t2 = FSPA_texOff(vec2( 0.0, -1.0)).r;
@@ -228,21 +228,20 @@ vec4 hook() {
 	luma_B = max(luma_B, min(s2, luma_A));
 	luma_B = min(luma_B, max(s8, luma_A));
 
-	return vec4(luma_B, o.gb, luma_A);
+	return vec4(luma_B, 0.0, 0.0, 1.0);
 
 }
 
-//!HOOK NATIVE
+//!HOOK LUMA
+//!BIND FSPA
 //!BIND FSPB
-//!BIND HOOKED
 //!DESC [FineSharp_RT] part C
 //!WHEN SSTR
 
 vec4 hook() {
 
-	vec4 c = FSPB_texOff(vec2(0.0));
-	float luma_A = c.a;
-	float luma_B = c.r;
+	float luma_A = FSPA_texOff(vec2(0.0)).r;
+	float luma_B = FSPB_texOff(vec2(0.0)).r;
 
 	float edge = abs( FSPB_texOff(vec2(0.0,-1.0)).r +
 					   FSPB_texOff(vec2(-1.0,0.0)).r +
@@ -250,9 +249,7 @@ vec4 hook() {
 					   FSPB_texOff(vec2(0.0,1.0)).r  - 4.0 * luma_B );
 
 	float luma_C = mix(luma_A, luma_B, XSTR * (1.0 - clamp(edge * XREP, 0.0, 1.0)));
-	vec4 orig = HOOKED_texOff(vec2(0.0));
-
-	return vec4(luma_C, orig.gb, orig.a);
+	return vec4(luma_C, 0.0, 0.0, 1.0);
 
 }
 
