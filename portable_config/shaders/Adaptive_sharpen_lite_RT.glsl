@@ -27,19 +27,22 @@
 // Tuned for use post-resize
 // MOD of adaptive_sharpen.glsl
 
-//!PARAM SHARP
+
+//!PARAM STR
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 2.0
 1.0
 
+
 //!HOOK SCALED
 //!BIND HOOKED
-//!DESC [adaptive_sharpen_RT]
+//!DESC [Adaptive_sharpen_lite_RT]
+//!WHEN STR
 
 //--------------------------------------- Settings ------------------------------------------------
 
-#define curve_height    SHARP                // Main control of sharpening strength [>0]
+#define curve_height    STR                  // Main control of sharpening strength [>0]
                                              // 0.3 <-> 2.0 is a reasonable range of values
 
 #define overshoot_ctrl  false                // Allow for higher overshoot if the current edge pixel
