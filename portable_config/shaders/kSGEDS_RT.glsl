@@ -9,7 +9,7 @@ LICENSE:
 */
 
 
-//!PARAM SHARP
+//!PARAM STR
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 2.0
@@ -31,7 +31,7 @@ LICENSE:
 //!HOOK SCALED
 //!BIND HOOKED
 //!DESC [kSGEDS_RT]
-//!WHEN SHARP
+//!WHEN STR
 
 vec4 hook() {
 
@@ -52,7 +52,7 @@ vec4 hook() {
 	float edgeVote = abs(pix_l.g - pix_r.g) + abs(pix_u.g - pix_d.g);
 
 	if (edgeVote > dynamic_ET) {
-		float deltaY = SHARP * laplacian_g;
+		float deltaY = STR * laplacian_g;
 		deltaY = clamp(deltaY, -23.0 / 255.0, 23.0 / 255.0);
 		color.rgb += vec3(deltaY);
 		color.rgb = clamp(color.rgb, 0.0, 1.0);

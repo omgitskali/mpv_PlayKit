@@ -9,25 +9,24 @@ LICENSE:
 */
 
 
-//!PARAM SHARP
+//!PARAM STR
 //!TYPE float
-//!MINIMUM 1.0
-//!MAXIMUM 8.0
-2.0
+//!MINIMUM 0.0
+//!MAXIMUM 16.0
+4.0
 
 //!PARAM ET
 //!TYPE float
 //!MINIMUM 0.0
-//!MAXIMUM 32.0
-8.0
+//!MAXIMUM 16.0
+4.0
 
 
-//!HOOK MAIN
+//!HOOK POSTKERNEL
 //!BIND HOOKED
-//!DESC [QCOM_SGSR_RT] v1.0.0
-//!WIDTH OUTPUT.w
-//!HEIGHT OUTPUT.h
-//!WHEN OUTPUT.w HOOKED.w 1.000 * > OUTPUT.h HOOKED.h 1.000 * > *
+//!BIND PREKERNEL
+//!DESC [QCOM_SGEDS_ms_RT]
+//!WHEN HOOKED.w PREKERNEL.w > HOOKED.h PREKERNEL.h > * STR *
 
 #define UseEdgeDirection 1
 
@@ -80,23 +79,23 @@ vec4 hook()
 
 	vec4 color = HOOKED_texOff(vec2(0.0));
 
-	vec2 imgCoord = (HOOKED_pos * HOOKED_size) + vec2(-0.5, 0.5);
+	vec2 imgCoord = (HOOKED_pos * PREKERNEL_size) + vec2(-0.5, 0.5);
 	vec2 imgCoordPixel = floor(imgCoord);
-	vec2 gather_coord = imgCoordPixel * HOOKED_pt;
+	vec2 gather_coord = imgCoordPixel * PREKERNEL_pt;
 	vec2 pl = fract(imgCoord);
 
-	vec4 left = HOOKED_gather(gather_coord, 1);
+	vec4 left = PREKERNEL_gather(gather_coord, 1);
 
 	float edgeVote = abs(left.z - left.y) + abs(color.g - left.y) + abs(color.g - left.z);
 
 	if(edgeVote > (ET / 255.0))
 	{
-		gather_coord.x += HOOKED_pt.x;
+		gather_coord.x += PREKERNEL_pt.x;
 
-		vec4 right = HOOKED_gather(gather_coord + vec2(HOOKED_pt.x, 0.0), 1);
+		vec4 right = PREKERNEL_gather(gather_coord + vec2(PREKERNEL_pt.x, 0.0), 1);
 		vec4 upDown;
-		upDown.xy = HOOKED_gather(gather_coord + vec2(0.0, -HOOKED_pt.y), 1).wz;
-		upDown.zw = HOOKED_gather(gather_coord + vec2(0.0, HOOKED_pt.y), 1).yx;
+		upDown.xy = PREKERNEL_gather(gather_coord + vec2(0.0, -PREKERNEL_pt.y), 1).wz;
+		upDown.zw = PREKERNEL_gather(gather_coord + vec2(0.0, PREKERNEL_pt.y), 1).yx;
 
 		float mean = (left.y+left.z+right.x+right.w)*0.25;
 
@@ -130,7 +129,7 @@ vec4 hook()
 		float finalY = aWY.y/aWY.x;
 		float maxY = max(max(left.y,left.z),max(right.x,right.w));
 		float minY = min(min(left.y,left.z),min(right.x,right.w));
-		float deltaY = clamp(SHARP*finalY, minY, maxY) - color.w;
+		float deltaY = clamp(STR*finalY, minY, maxY) - color.w;
 
 		deltaY = clamp(deltaY, -23.0 / 255.0, 23.0 / 255.0);
 
