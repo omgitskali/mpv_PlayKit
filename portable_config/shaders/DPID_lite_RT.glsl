@@ -13,9 +13,9 @@ LICENSE:
 
 //!PARAM LBD
 //!TYPE float
-//!MINIMUM 0.0
+//!MINIMUM 0.001
 //!MAXIMUM 3.0
-0.5
+1.0
 
 
 //!HOOK MAIN
@@ -24,7 +24,7 @@ LICENSE:
 //!DESC [DPID_lite_RT] raw -->> ref
 //!WIDTH OUTPUT.w
 //!HEIGHT OUTPUT.h
-//!WHEN OUTPUT.w OUTPUT.h * HOOKED.w HOOKED.h * < LBD *
+//!WHEN OUTPUT.w HOOKED.w < OUTPUT.h HOOKED.h < *
 
 vec4 hook() {
 
@@ -48,14 +48,13 @@ vec4 hook() {
 
 }
 
-
 //!HOOK MAIN
 //!BIND I1
 //!SAVE I2
 //!DESC [DPID_lite_RT] ref -->> sample
 //!WIDTH OUTPUT.w
 //!HEIGHT OUTPUT.h
-//!WHEN OUTPUT.w OUTPUT.h * HOOKED.w HOOKED.h * < LBD *
+//!WHEN OUTPUT.w HOOKED.w < OUTPUT.h HOOKED.h < *
 
 vec4 hook() {
 
@@ -73,14 +72,13 @@ vec4 hook() {
 
 }
 
-
 //!HOOK MAIN
 //!BIND HOOKED
 //!BIND I2
 //!DESC [DPID_lite_RT] dscale
 //!WIDTH OUTPUT.w
 //!HEIGHT OUTPUT.h
-//!WHEN OUTPUT.w OUTPUT.h * HOOKED.w HOOKED.h * < LBD *
+//!WHEN OUTPUT.w HOOKED.w < OUTPUT.h HOOKED.h < *
 
 vec4 hook() {
 
