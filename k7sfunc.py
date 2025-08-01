@@ -2,7 +2,7 @@
 ### 文档： https://github.com/hooke007/MPV_lazy/wiki/3_K7sfunc
 ##################################################
 
-__version__ = "0.8.4"
+__version__ = "0.8.8"
 
 __all__ = [
 	"FMT_CHANGE", "FMT_CTRL",
@@ -350,6 +350,44 @@ def FMT_CTRL(
 				output = core.resize.Bicubic(clip=clip, width=w_ds, height=h_ds, filter_param_a=spl_b, filter_param_b=spl_c)
 			else :
 				output = core.resize.Bicubic(clip=clip, width=w_ds, height=h_ds, filter_param_a=spl_b, filter_param_b=spl_c)
+
+	return output
+
+##################################################
+## idea FM chaiNNer (9e8b53888215df850d8e237598baf9b1eb6006a8)
+## 分频色彩修复 # helper
+##################################################
+
+def DCF(
+	input : vs.VideoNode,
+	ref : vs.VideoNode,
+	rad : int = 10,
+	bp : int = 5,
+	vs_t : int = vs_thd_dft,
+) -> vs.VideoNode :
+
+	func_name = "DCF"
+	core.num_threads = vs_t
+
+	fmt_in = input.format.id
+	fmt_ref = ref.format.id
+	# 仅考虑输入为RGBH或RGBS的情况
+	if fmt_in != vs.RGBS :
+		input = core.resize.Point(clip=input, format=vs.RGBS)
+	if fmt_ref != vs.RGBS :
+		ref = core.resize.Point(clip=ref, format=vs.RGBS)
+
+	w_in, h_in = input.width, input.height
+	w_ref, h_ref = ref.width, ref.height
+	if w_ref != w_in or h_ref != h_in :
+		ref = core.resize.Bilinear(clip=ref, width=w_in, height=h_in)
+
+	planes = [0, 1, 2]
+	blur_in = core.std.BoxBlur(clip=input, hradius=rad, hpasses=bp, vradius=rad, vpasses=bp, planes=planes)
+	blur_ref = core.std.BoxBlur(clip=ref, hradius=rad, hpasses=bp, vradius=rad, vpasses=bp, planes=planes)
+
+	diff = core.std.MakeDiff(clipa=blur_ref, clipb=blur_in, planes=planes)
+	output = core.std.MergeDiff(clipa=input, clipb=diff, planes=planes)
 
 	return output
 
@@ -3259,6 +3297,7 @@ def STAB_HQ(
 def UAI_DML(
 	input : vs.VideoNode,
 	clamp : bool = False,
+	crc : bool = False,
 	model_pth : str = "",
 	fp16_qnt : bool = True,
 	gpu : typing.Literal[0, 1, 2] = 0,
@@ -3271,6 +3310,8 @@ def UAI_DML(
 		raise vs.Error(f"模块 {func_name} 的子参数 input 的值无效")
 	if not isinstance(clamp, bool) :
 		raise vs.Error(f"模块 {func_name} 的子参数 clamp 的值无效")
+	if not isinstance(crc, bool) :
+		raise vs.Error(f"模块 {func_name} 的子参数 crc 的值无效")
 	if len(model_pth) <= 5 :
 		raise vs.Error(f"模块 {func_name} 的子参数 model_pth 的值无效")
 	if not isinstance(fp16_qnt, bool) :
@@ -3323,6 +3364,9 @@ def UAI_DML(
 		clip = core.akarin.Expr(clips=clip, expr="x 0 1 clamp")
 	be_param = vsmlrt.BackendV2.ORT_DML(device_id=gpu, num_streams=gpu_t, fp16=fp16_qnt)
 	infer = vsmlrt.inference(clips=clip, network_path=mdl_pth, backend=be_param)
+
+	if crc :
+		infer = DCF(input=infer, ref=clip)
 	output = core.resize.Bilinear(clip=infer, format=fmt_in, matrix_s="709", range=1 if colorlv==0 else None)
 
 	return output
@@ -3334,6 +3378,7 @@ def UAI_DML(
 def UAI_MIGX(
 	input : vs.VideoNode,
 	clamp : bool = False,
+	crc : bool = False,
 	model_pth : str = "",
 	fp16_qnt : bool = True,
 	exh_tune : bool = False,
@@ -3347,6 +3392,8 @@ def UAI_MIGX(
 		raise vs.Error(f"模块 {func_name} 的子参数 input 的值无效")
 	if not isinstance(clamp, bool) :
 		raise vs.Error(f"模块 {func_name} 的子参数 clamp 的值无效")
+	if not isinstance(crc, bool) :
+		raise vs.Error(f"模块 {func_name} 的子参数 crc 的值无效")
 	if len(model_pth) <= 5 :
 		raise vs.Error(f"模块 {func_name} 的子参数 model_pth 的值无效")
 	if not isinstance(fp16_qnt, bool) :
@@ -3403,6 +3450,9 @@ def UAI_MIGX(
 		fp16=fp16_qnt, exhaustive_tune=exh_tune, opt_shapes=[clip.width, clip.height],
 		device_id=gpu, num_streams=gpu_t, short_path=True)
 	infer = vsmlrt.inference(clips=clip, network_path=mdl_pth, backend=be_param)
+
+	if crc :
+		infer = DCF(input=infer, ref=clip)
 	output = core.resize.Bilinear(clip=infer, format=fmt_in, matrix_s="709", range=1 if colorlv==0 else None)
 
 	return output
@@ -3414,6 +3464,7 @@ def UAI_MIGX(
 def UAI_NV_TRT(
 	input : vs.VideoNode,
 	clamp : bool = False,
+	crc : bool = False,
 	model_pth : str = "",
 	opt_lv : typing.Literal[0, 1, 2, 3, 4, 5] = 3,
 	cuda_opt : typing.List[int] = [0, 0, 0],
@@ -3433,6 +3484,8 @@ def UAI_NV_TRT(
 		raise vs.Error(f"模块 {func_name} 的子参数 input 的值无效")
 	if not isinstance(clamp, bool) :
 		raise vs.Error(f"模块 {func_name} 的子参数 clamp 的值无效")
+	if not isinstance(crc, bool) :
+		raise vs.Error(f"模块 {func_name} 的子参数 crc 的值无效")
 	if len(model_pth) <= 5 :
 		raise vs.Error(f"模块 {func_name} 的子参数 model_pth 的值无效")
 	if opt_lv not in [0, 1, 2, 3, 4, 5] :
@@ -3511,6 +3564,9 @@ def UAI_NV_TRT(
 		int8=int8_qnt, fp16=fp16_qnt, tf32=False if fp16_qnt else True, output_format=1 if fp16_qnt else 0, workspace=None if ws_size < 128 else (ws_size if st_eng else ws_size * 2),
 		static_shape=st_eng, min_shapes=[0, 0] if st_eng else [384, 384], opt_shapes=None if st_eng else res_opt, max_shapes=None if st_eng else res_max)
 	infer = vsmlrt.inference(clips=clip, network_path=mdl_pth, backend=be_param)
+
+	if crc :
+		infer = DCF(input=infer, ref=clip)
 	output = core.resize.Bilinear(clip=infer, format=fmt_in, matrix_s="709", range=1 if colorlv==0 else None)
 
 	return output
