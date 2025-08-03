@@ -2,7 +2,7 @@
 ### 文档： https://github.com/hooke007/MPV_lazy/wiki/3_K7sfunc
 ##################################################
 
-__version__ = "0.8.8"
+__version__ = "0.8.9"
 
 __all__ = [
 	"FMT_CHANGE", "FMT_CTRL",
@@ -681,8 +681,9 @@ def FPS_CTRL(
 
 def ACNET_STD(
 	input : vs.VideoNode,
-	nr : typing.Literal[0, 1] = 1,
-	nr_lv : typing.Literal[1, 2, 3] = 1,
+	model : typing.Literal[1, 2, 3] = 1,
+	model_var : typing.Literal[0, 1, 2, 3] = 0,
+	turbo : bool = True,
 	gpu : typing.Literal[0, 1, 2] = 0,
 	gpu_m : typing.Literal[1, 2] = 1,
 	vs_t : int = vs_thd_dft,
@@ -691,10 +692,12 @@ def ACNET_STD(
 	func_name = "ACNET_STD"
 	if not isinstance(input, vs.VideoNode) :
 		raise vs.Error(f"模块 {func_name} 的子参数 input 的值无效")
-	if nr not in [0, 1] :
-		raise vs.Error(f"模块 {func_name} 的子参数 nr 的值无效")
-	if nr_lv not in [1, 2, 3] :
-		raise vs.Error(f"模块 {func_name} 的子参数 nr_lv 的值无效")
+	if model not in [1, 2, 3] :
+		raise vs.Error(f"模块 {func_name} 的子参数 model 的值无效")
+	if model_var not in [0, 1, 2, 3] :
+		raise vs.Error(f"模块 {func_name} 的子参数 model_var 的值无效")
+	if not isinstance(turbo, bool) :
+		raise vs.Error(f"模块 {func_name} 的子参数 turbo 的值无效")
 	if gpu not in [0, 1, 2] :
 		raise vs.Error(f"模块 {func_name} 的子参数 gpu 的值无效")
 	if gpu_m not in [1, 2] :
@@ -706,14 +709,32 @@ def ACNET_STD(
 		raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 anime4kcpp")
 
 	core.num_threads = vs_t
+	w_in, h_in = input.width, input.height
+	size_in = w_in * h_in
 	fmt_in = input.format.id
 
-	if fmt_in == vs.YUV444P16 :
-		cut0 = input
+	if (size_in > 2048 * 1080) :
+		raise Exception("源分辨率超过限制的范围，已临时中止。")
+
+	model_list = {
+		1: "acnet-gan",
+		2: { 0: "acnet-hdn0", 1: "acnet-hdn1", 2: "acnet-hdn2", 3: "acnet-hdn3" },
+		3: "arnet-hdn"
+	}
+	mdl = model_list[model]
+	if isinstance(mdl, dict) :
+		mdl = mdl[model_var]
+
+	if turbo :
+		if fmt_in != vs.YUV420P8 :
+			cut0 = core.resize.Point(clip=input, format=vs.YUV420P8)
 	else :
-		cut0 = core.resize.Bilinear(clip=input, format=vs.YUV444P16)
-	cut1 = core.anime4kcpp.Anime4KCPP(src=cut0, zoomFactor=2, ACNet=1, GPUMode=1, GPGPUModel="opencl" if gpu_m==1 else "cuda", HDN=nr, HDNLevel=nr_lv, platformID=gpu, deviceID=gpu)
-	output = core.resize.Bilinear(clip=cut1, format=fmt_in)
+		if fmt_in != vs.YUV444P16 :
+			cut0 = core.resize.Point(clip=input, format=vs.YUV444P16)
+
+	output = core.anime4kcpp.ACUpscale(clip=cut0, factor=2.0, processor="opencl" if gpu_m==1 else "cuda", device=gpu, model=mdl)
+	if not turbo :
+		output = core.resize.Point(clip=output, format=fmt_in)
 
 	return output
 
