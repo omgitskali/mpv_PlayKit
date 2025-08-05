@@ -15,19 +15,21 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library.
 
+
 //!PARAM SHARP
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 1.0
 0.5
 
+
 //!HOOK POSTKERNEL
 //!BIND HOOKED
 //!SAVE LOWRES
-//!HEIGHT NATIVE_CROPPED.h
-//!WHEN NATIVE_CROPPED.h OUTPUT.h <
-//!COMPONENTS 4
 //!DESC [SSimSuperRes_RT] Downscaling I
+//!HEIGHT PREKERNEL.h
+//!WHEN POSTKERNEL.w PREKERNEL.w > POSTKERNEL.h PREKERNEL.h > *
+//!COMPONENTS 4
 
 #define axis        1
 
@@ -66,11 +68,11 @@ vec4 hook() {
 //!HOOK POSTKERNEL
 //!BIND LOWRES
 //!SAVE LOWRES
-//!WIDTH NATIVE_CROPPED.w
-//!HEIGHT NATIVE_CROPPED.h
-//!WHEN NATIVE_CROPPED.w OUTPUT.w <
-//!COMPONENTS 4
 //!DESC [SSimSuperRes_RT] Downscaling II
+//!WIDTH PREKERNEL.w
+//!HEIGHT PREKERNEL.h
+//!WHEN POSTKERNEL.w PREKERNEL.w > POSTKERNEL.h PREKERNEL.h > *
+//!COMPONENTS 4
 
 #define axis        0
 
@@ -110,11 +112,11 @@ vec4 hook() {
 //!BIND PREKERNEL
 //!BIND LOWRES
 //!SAVE var
-//!WIDTH NATIVE_CROPPED.w
-//!HEIGHT NATIVE_CROPPED.h
-//!WHEN NATIVE_CROPPED.h OUTPUT.h <
-//!COMPONENTS 2
 //!DESC [SSimSuperRes_RT] var
+//!WIDTH PREKERNEL.w
+//!HEIGHT PREKERNEL.h
+//!WHEN POSTKERNEL.w PREKERNEL.w > POSTKERNEL.h PREKERNEL.h > *
+//!COMPONENTS 2
 
 #define spread      1.0 / 4.0
 
@@ -153,8 +155,8 @@ vec4 hook() {
 //!BIND PREKERNEL
 //!BIND LOWRES
 //!BIND var
-//!WHEN NATIVE_CROPPED.h OUTPUT.h <
 //!DESC [SSimSuperRes_RT] final pass
+//!WHEN POSTKERNEL.w PREKERNEL.w > POSTKERNEL.h PREKERNEL.h > *
 
 #define oversharp   SHARP
 

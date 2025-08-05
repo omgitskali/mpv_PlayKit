@@ -13,22 +13,24 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library.
 
+
 //!PARAM SHARP
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 1.0
 0.0
 
+
 //!HOOK POSTKERNEL
 //!BIND PREKERNEL
 //!BIND HOOKED
 //!SAVE L2
-//!WIDTH NATIVE_CROPPED.w
-//!WHEN NATIVE_CROPPED.h POSTKERNEL.h >
-//!COMPONENTS 3
 //!DESC [SSimDownscaler_RT] L2 pass 1
+//!WIDTH PREKERNEL.w
+//!WHEN PREKERNEL.w POSTKERNEL.w > PREKERNEL.h POSTKERNEL.h > *
+//!COMPONENTS 3
 
-#define axis 1
+#define axis        1
 
 #define offset      vec2(0,0)
 
@@ -64,11 +66,11 @@ vec4 hook() {
 //!BIND L2
 //!BIND HOOKED
 //!SAVE L2
-//!WHEN NATIVE_CROPPED.w POSTKERNEL.w >
-//!COMPONENTS 3
 //!DESC [SSimDownscaler_RT] L2 pass 2
+//!WHEN PREKERNEL.w POSTKERNEL.w > PREKERNEL.h POSTKERNEL.h > *
+//!COMPONENTS 3
 
-#define axis 0
+#define axis        0
 
 #define offset      vec2(0,0)
 
@@ -101,9 +103,9 @@ vec4 hook() {
 //!BIND HOOKED
 //!BIND L2
 //!SAVE MR
-//!WHEN NATIVE_CROPPED.h POSTKERNEL.h >
-//!COMPONENTS 4
 //!DESC [SSimDownscaler_RT] mean & R
+//!WHEN PREKERNEL.w POSTKERNEL.w > PREKERNEL.h POSTKERNEL.h > *
+//!COMPONENTS 4
 
 #define oversharp   SHARP
 
@@ -165,8 +167,8 @@ vec4 hook() {
 //!HOOK POSTKERNEL
 //!BIND HOOKED
 //!BIND MR
-//!WHEN NATIVE_CROPPED.h POSTKERNEL.h >
 //!DESC [SSimDownscaler_RT] final pass
+//!WHEN PREKERNEL.w POSTKERNEL.w > PREKERNEL.h POSTKERNEL.h > *
 
 #define locality    2.0
 
