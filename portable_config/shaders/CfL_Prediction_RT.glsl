@@ -31,12 +31,6 @@
 //!TYPE float
 0.0
 
-//!PARAM SMTH
-//!TYPE int
-//!MINIMUM 0
-//!MAXIMUM 1
-1
-
 //!PARAM distance_coeff
 //!TYPE float
 //!MINIMUM 0.0
@@ -337,8 +331,8 @@ vec4 hook() {
 //!HOOK CHROMA
 //!BIND CHROMA
 //!BIND LUMA
+//!BIND LUMA_LR
 //!DESC [CfL_Prediction_RT] (Smoothing Chroma)
-//!WHEN SMTH
 
 float comp_w(vec2 spatial_distance, float intensity_distance) {
     return max(100.0 * exp(-distance_coeff * pow(length(spatial_distance), 2.0) - intensity_coeff * pow(intensity_distance, 2.0)), 1e-32);
