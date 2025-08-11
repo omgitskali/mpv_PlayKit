@@ -18,7 +18,9 @@
  <KEY>   script-message-to input_plus chapter-useek 1   # 下一个章节（此功能需要 uosc 脚本：自动跳过无章节到播放列表或当前目录的下一个文件）
  <KEY>   script-message-to input_plus chapter-useek -1 nat
 
- <KEY>   script-binding input_plus/import_files        # 打开文件（唤起一个打开文件的窗口，下面三项同理 仅Windows可用）
+ <KEY>   script-binding input_plus/import_files        # 打开文件（唤起一个打开文件的窗口，下面五项同理 仅Windows可用）
+ <KEY>   script-binding input_plus/import_iso_dvd      # 打开DVD镜像（...）
+ <KEY>   script-binding input_plus/import_iso_bd       # 打开BD镜像（...）
  <KEY>   script-binding input_plus/import_url          # 打开地址（不可取消）
  <KEY>   script-binding input_plus/append_aid          # 追加其它音轨（不切换）
  <KEY>   script-binding input_plus/append_sid          # 追加其它字幕（切换）
@@ -331,38 +333,66 @@ function cycle_cmds(...)
 end
 
 
-function import_files()
+function import_files(iso)
 	if plat ~= "windows" then
 		return
 	end
+
+	local actions = {
+		[0] = {
+			multiselect = "$true",
+			handler = function(filename, is_first)
+				local mode = is_first and "replace" or "append"
+				mp.commandv("loadfile", filename, mode)
+			end
+		},
+		[1] = { -- DVD ISO
+			multiselect = "$false",
+			handler = function(filename)
+				mp.commandv("set", "dvd-device", filename)
+				mp.commandv("loadfile", "dvd://", "replace")
+			end
+		},
+		[2] = { -- BD ISO
+			multiselect = "$false",
+			handler = function(filename)
+				mp.commandv("set", "bluray-device", filename)
+				mp.commandv("loadfile", "bd://", "replace")
+			end
+		}
+	}
+	local action = actions[iso]
+
 	local was_ontop = mp.get_property_native("ontop")
 	if was_ontop then mp.set_property_native("ontop", false) end
+
+	local ps_command = string.format([[& {
+		Trap { Write-Error -ErrorRecord $_; Exit 1 }
+		Add-Type -AssemblyName PresentationFramework
+		$u8 = [System.Text.Encoding]::UTF8
+		$out = [Console]::OpenStandardOutput()
+		$ofd = New-Object -TypeName Microsoft.Win32.OpenFileDialog
+		$ofd.Multiselect = %s
+		If ($ofd.ShowDialog() -eq $true) {
+			ForEach ($filename in $ofd.FileNames) {
+				$u8filename = $u8.GetBytes("$filename`n")
+				$out.Write($u8filename, 0, $u8filename.Length)
+			}
+		}
+	}]] , action.multiselect)
+
 	local res = mp.utils.subprocess({
-		args = {'powershell', '-NoProfile', '-Command', [[& {
-			Trap {
-				Write-Error -ErrorRecord $_
-				Exit 1
-			}
-			Add-Type -AssemblyName PresentationFramework
-			$u8 = [System.Text.Encoding]::UTF8
-			$out = [Console]::OpenStandardOutput()
-			$ofd = New-Object -TypeName Microsoft.Win32.OpenFileDialog
-			$ofd.Multiselect = $true
-			If ($ofd.ShowDialog() -eq $true) {
-				ForEach ($filename in $ofd.FileNames) {
-					$u8filename = $u8.GetBytes("$filename`n")
-					$out.Write($u8filename, 0, $u8filename.Length)
-				}
-			}
-		}]]},
+		args = {'powershell', '-NoProfile', '-Command', ps_command},
 		cancellable = false,
 	})
 	if was_ontop then mp.set_property_native("ontop", true) end
-	if (res.status ~= 0) then return end
-	local first_file = true
-	for filename in string.gmatch(res.stdout, '[^\n]+') do
-		mp.commandv("loadfile", filename, first_file and "replace" or "append")
-		first_file = false
+
+	if (res.status == 0 and res.stdout) then
+		local first_file = true
+		for filename in string.gmatch(res.stdout, '[^\r\n]+') do
+			action.handler(filename, first_file)
+			first_file = false
+		end
 	end
 end
 function import_url()
@@ -1087,7 +1117,9 @@ mp.add_key_binding(nil, "chapter_back_nat", function() chapter_seek_force(-1, tr
 mp.add_key_binding(nil, "chapter_next", function() chapter_seek_force(1) end)
 mp.register_script_message("chapter-useek", function(dir, nat) chapter_seek_force(dir, nat, true) end)
 
-mp.add_key_binding(nil, "import_files", import_files)
+mp.add_key_binding(nil, "import_files", function() import_files(0) end)
+mp.add_key_binding(nil, "import_iso_dvd", function() import_files(1) end)
+mp.add_key_binding(nil, "import_iso_bd", function() import_files(2) end)
 mp.add_key_binding(nil, "import_url", import_url)
 mp.add_key_binding(nil, "import_append_aid", import_append_aid)
 mp.add_key_binding(nil, "import_append_sid", import_append_sid)
