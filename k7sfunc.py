@@ -3027,6 +3027,10 @@ def DEINT_STD(
 			raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 tdm")
 
 	core.num_threads = vs_t
+	h_in = input.height
+
+	if h_in % 2 != 0 :
+		input = core.std.Crop(clip=input, bottom=1)
 
 	if ref_m == 1 :
 		ref = core.znedi3.nnedi3(clip=input, field=3 if tff else 2, dh=False)
@@ -3081,6 +3085,7 @@ def DEINT_EX(
 		raise vs.Error(f"模块 {func_name} 的子参数 vs_t 的值无效")
 
 	core.num_threads = vs_t
+	h_in = input.height
 
 	global qtgmc
 	if qtgmc is None :
@@ -3091,6 +3096,8 @@ def DEINT_EX(
 	if LooseVersion(qtgmc.__version__) < LooseVersion("0.3.0") :
 		raise ImportError(f"模块 {func_name} 依赖错误：缺失脚本 qtgmc 的版本号过低，至少 0.3.0")
 
+	if h_in % 2 != 0 :
+		input = core.std.Crop(clip=input, bottom=1)
 	output = qtgmc.QTGMCv2(input=input, fps_in=fps_in, deint_lv=deint_lv, src_type=src_type, deint_den=deint_den, tff=tff, cpu=cpu, gpu=gpu)
 
 	return output
