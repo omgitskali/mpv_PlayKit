@@ -2,7 +2,7 @@
 ### 文档： https://github.com/hooke007/MPV_lazy/wiki/3_K7sfunc
 ##################################################
 
-__version__ = "0.8.9"
+__version__ = "0.8.12"
 
 __all__ = [
 	"FMT_CHANGE", "FMT_CTRL",
@@ -725,6 +725,7 @@ def ACNET_STD(
 	if isinstance(mdl, dict) :
 		mdl = mdl[model_var]
 
+	cut0 = input
 	if turbo :
 		if fmt_in != vs.YUV420P8 :
 			cut0 = core.resize.Point(clip=input, format=vs.YUV420P8)
