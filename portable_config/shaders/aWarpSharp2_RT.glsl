@@ -15,7 +15,7 @@ LICENSE:
 //!TYPE float
 //!MINIMUM -20.0
 //!MAXIMUM 20.0
-8.0
+4.0
 
 //!PARAM ET
 //!TYPE float

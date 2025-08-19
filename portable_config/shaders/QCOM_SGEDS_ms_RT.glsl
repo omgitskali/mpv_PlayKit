@@ -13,13 +13,13 @@ LICENSE:
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 16.0
-4.0
+2.0
 
 //!PARAM ET
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 16.0
-4.0
+8.0
 
 
 //!HOOK POSTKERNEL
