@@ -11,7 +11,7 @@ LICENSE:
 
 //!PARAM STR
 //!TYPE float
-//!MINIMUM 0.0
+//!MINIMUM 1.0
 //!MAXIMUM 16.0
 2.0
 
@@ -19,7 +19,7 @@ LICENSE:
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 16.0
-8.0
+12.0
 
 
 //!HOOK POSTKERNEL
@@ -28,14 +28,26 @@ LICENSE:
 //!DESC [QCOM_SGEDS_ms_RT]
 //!WHEN HOOKED.w PREKERNEL.w > HOOKED.h PREKERNEL.h > * STR *
 
+#define CORE 2
+#define SMTH 1
 #define UseEdgeDirection 1
 
-float fastLanczos2(float x)
+float weight_core(float x)
 {
+#if (CORE == 1)
 	float wA = x-4.0;
 	float wB = x*wA-wA;
 	wA *= wA;
 	return wB*wA;
+#else
+	float dist = sqrt(abs(x));
+	if (dist < 1.0) {
+		return 1.0 + dist * dist * (1.5 * dist - 2.5);
+	} else if (dist < 2.0) {
+		return 2.0 + dist * (-4.0 + dist * (2.5 - 0.5 * dist));
+	}
+	return 0.0;
+#endif
 }
 
 #if (UseEdgeDirection == 1)
@@ -53,10 +65,14 @@ vec2 weightY(float dx, float dy, float c, float data)
 	float x = (((dx*dx)+(dy*dy))+((edgeDis*edgeDis)*((clamp(((c*c)*std),0.0,1.0)*0.7)+-1.0)));
 #else
 	float std = data;
+	#if (CORE == 1)
 	float x = ((dx*dx)+(dy* dy))* 0.55 + clamp(abs(c)*std, 0.0, 1.0);
+	#else
+	float x = ((dx*dx)+(dy* dy)) + clamp(abs(c)*std, 0.0, 1.0);
+	#endif
 #endif
 
-	float w = fastLanczos2(x);
+	float w = weight_core(x);
 	return vec2(w, w * c);
 }
 
@@ -88,7 +104,17 @@ vec4 hook()
 
 	float edgeVote = abs(left.z - left.y) + abs(color.g - left.y) + abs(color.g - left.z);
 
+#if (SMTH == 1)
+	float threshold = ET / 255.0;
+	float transition_width = threshold * 0.5;
+	float lower_bound = threshold - transition_width;
+	float upper_bound = threshold + transition_width;
+	float sharp_factor = smoothstep(lower_bound, upper_bound, edgeVote);
+
+	if (sharp_factor > 0.0)
+#else
 	if(edgeVote > (ET / 255.0))
+#endif
 	{
 		gather_coord.x += PREKERNEL_pt.x;
 
@@ -131,7 +157,12 @@ vec4 hook()
 		float minY = min(min(left.y,left.z),min(right.x,right.w));
 		float deltaY = clamp(STR*finalY, minY, maxY) - color.w;
 
+#if (SMTH == 1)
+		deltaY = clamp(deltaY, -17.0 / 255.0, 17.0 / 255.0);
+		deltaY *= sharp_factor;
+#else
 		deltaY = clamp(deltaY, -23.0 / 255.0, 23.0 / 255.0);
+#endif
 
 		color.r = clamp((color.r+deltaY),0.0,1.0);
 		color.g = clamp((color.g+deltaY),0.0,1.0);
