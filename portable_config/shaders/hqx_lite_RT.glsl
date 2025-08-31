@@ -33,7 +33,7 @@ LICENSE:
 //!DESC [hqx_lite_RT]
 //!WIDTH HOOKED.w USF *
 //!HEIGHT HOOKED.h USF *
-//!WHEN HOOKED.w 2049 < HOOKED.h 2049 < *
+//!WHEN HOOKED.w USF * 8193 < HOOKED.h USF * 8193 < *
 
 #define AA_SCALE (USF * AAF)
 
