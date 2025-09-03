@@ -942,6 +942,21 @@ function volume_add(diff)
 end
 
 
+function lazy_helper(link)
+	local param = ""
+	if plat == "windows" then
+		param = 'no-osd run cmd /c start "" "' .. link .. '"'
+	elseif plat == "darwin" then
+		param = "no-osd run /bin/sh -c \"open '" .. link .. "' &\""
+	elseif plat == "linux" then
+		param = "no-osd run /bin/sh -c \"xdg-open '" .. link .. "' &\""
+	else
+		return
+	end
+	return param
+end
+
+
 function prop_hold(prop)
 	local function prop_auto(flag_complex)
 		local evt = flag_complex.event
@@ -1122,4 +1137,27 @@ mp.register_script_message("update-var", function(var, val)
 		mp.msg.info(msg_info)
 
 	end
+end)
+
+mp.register_script_message("lazy-helper", function(index)
+
+	index = tonumber(index)
+	local cmd = ""
+	if index == 0 then -- project
+		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy")
+	elseif index == 1 then -- mpv manual
+		cmd = lazy_helper("https://mpv.io/manual/master/")
+	elseif index == 2 then -- mpv manual cn
+		cmd = lazy_helper("https://hooke007.github.io/official_man/mpv.html")
+	elseif index == 3 then -- faq
+		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy/wiki/0_FAQ")
+	elseif index == 4 then -- filter
+		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy/wiki/3_FILTER")
+	elseif index == 5 then -- shader
+		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy/wiki/4_GLSL")
+	end
+	if cmd ~= "" then
+		mp.command(cmd)
+	end
+
 end)
