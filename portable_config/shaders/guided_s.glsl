@@ -1,4 +1,4 @@
-// 文档 https://github.com/hooke007/MPV_lazy/wiki/4_GLSL
+// 文档 https://github.com/hooke007/mpv_PlayKit/wiki/4_GLSL
 
 /* vi: ft=c
  *

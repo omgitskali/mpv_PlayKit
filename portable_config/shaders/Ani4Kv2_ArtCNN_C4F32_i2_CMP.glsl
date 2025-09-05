@@ -1,4 +1,4 @@
-// 文档 https://github.com/hooke007/MPV_lazy/wiki/4_GLSL
+// 文档 https://github.com/hooke007/mpv_PlayKit/wiki/4_GLSL
 
 // Ani4Kv2 ArtCNN - trained by Sirosky and distributed on the CC BY-NC 4.0 license.
 // The ArtCNN architecture is further subject to the below license.

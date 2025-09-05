@@ -1,5 +1,5 @@
 --[[
-文档_ https://github.com/hooke007/MPV_lazy/discussions/615
+文档_ https://github.com/hooke007/mpv_PlayKit/discussions/615
 
 快捷指令增强
 ]]
@@ -1144,17 +1144,17 @@ mp.register_script_message("lazy-helper", function(index)
 	index = tonumber(index)
 	local cmd = ""
 	if index == 0 then -- project
-		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy")
+		cmd = lazy_helper("https://github.com/hooke007/mpv_PlayKit")
 	elseif index == 1 then -- mpv manual
 		cmd = lazy_helper("https://mpv.io/manual/master/")
 	elseif index == 2 then -- mpv manual cn
 		cmd = lazy_helper("https://hooke007.github.io/official_man/mpv.html")
 	elseif index == 3 then -- faq
-		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy/wiki/0_FAQ")
+		cmd = lazy_helper("https://github.com/hooke007/mpv_PlayKit/wiki/0_FAQ")
 	elseif index == 4 then -- filter
-		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy/wiki/3_FILTER")
+		cmd = lazy_helper("https://github.com/hooke007/mpv_PlayKit/wiki/3_FILTER")
 	elseif index == 5 then -- shader
-		cmd = lazy_helper("https://github.com/hooke007/MPV_lazy/wiki/4_GLSL")
+		cmd = lazy_helper("https://github.com/hooke007/mpv_PlayKit/wiki/4_GLSL")
 	end
 	if cmd ~= "" then
 		mp.command(cmd)

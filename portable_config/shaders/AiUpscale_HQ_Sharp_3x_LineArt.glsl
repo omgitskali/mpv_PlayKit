@@ -1,4 +1,4 @@
-// 文档 https://github.com/hooke007/MPV_lazy/wiki/4_GLSL
+// 文档 https://github.com/hooke007/mpv_PlayKit/wiki/4_GLSL
 
 //!HOOK LUMA
 //!WHEN OUTPUT.w LUMA.w 2.200 * > OUTPUT.h LUMA.h 2.200 * > *

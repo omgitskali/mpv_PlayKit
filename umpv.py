@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-文档_ https://github.com/hooke007/MPV_lazy/wiki/0_FAQ#%E5%8D%95%E5%AE%9E%E4%BE%8B%E6%A8%A1%E5%BC%8F
+文档_ https://github.com/hooke007/mpv_PlayKit/wiki/0_FAQ#%E5%8D%95%E5%AE%9E%E4%BE%8B%E6%A8%A1%E5%BC%8F
 
 SOURCE_ https://github.com/mpv-player/mpv/blob/master/TOOLS/umpv
 COMMIT_ 48f944d21b42b682bd12e522f5b24fd1a0e15058

@@ -1,5 +1,5 @@
 ##################################################
-### 文档： https://github.com/hooke007/MPV_lazy/wiki/3_K7sfunc
+### 文档： https://github.com/hooke007/mpv_PlayKit/wiki/3_K7sfunc
 ##################################################
 
 __version__ = "0.8.12"
