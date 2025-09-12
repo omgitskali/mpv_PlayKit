@@ -2,7 +2,7 @@
 ### 文档： https://github.com/hooke007/mpv_PlayKit/wiki/3_K7sfunc
 ##################################################
 
-__version__ = "0.8.12"
+__version__ = "0.8.13"
 
 __all__ = [
 	"FMT_CHANGE", "FMT_CTRL",
@@ -383,8 +383,8 @@ def DCF(
 		ref = core.resize.Bilinear(clip=ref, width=w_in, height=h_in)
 
 	planes = [0, 1, 2]
-	blur_in = core.std.BoxBlur(clip=input, hradius=rad, hpasses=bp, vradius=rad, vpasses=bp, planes=planes)
-	blur_ref = core.std.BoxBlur(clip=ref, hradius=rad, hpasses=bp, vradius=rad, vpasses=bp, planes=planes)
+	blur_in = core.vszip.BoxBlur(clip=input, planes=planes, hradius=rad, hpasses=bp, vradius=rad, vpasses=bp)
+	blur_ref = core.vszip.BoxBlur(clip=ref, planes=planes, hradius=rad, hpasses=bp, vradius=rad, vpasses=bp)
 
 	diff = core.std.MakeDiff(clipa=blur_ref, clipb=blur_in, planes=planes)
 	output = core.std.MergeDiff(clipa=input, clipb=diff, planes=planes)
