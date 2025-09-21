@@ -77,6 +77,7 @@ local all_lines = {}
 local scroll_offset = 0
 
 local cache = {}
+local clipboard_cache = {}
 local current_path = nil
 local is_loading = false
 local is_fresh_load = true  -- Track if current data is freshly loaded
@@ -367,6 +368,54 @@ local function get_mediainfo_async(callback)
 	end)
 end
 
+local function get_mediainfo_text_async(callback)
+	local path = mp.get_property("path")
+	if not path then
+		msg.error("get_mediainfo_text_async: No file")
+		callback(nil, "get_mediainfo_text_async: No file")
+		return
+	end
+
+	if user_opt.network == false and path:match("^[a-zA-Z0-9]+://") then
+		msg.info("get_mediainfo_text_async: Network stream parsing is disabled")
+		callback(nil, "get_mediainfo_text_async: Network stream parsing is disabled")
+		return
+	end
+
+	if clipboard_cache[path] then
+		msg.verbose("get_mediainfo_text_async: Using cache for: " .. path)
+		callback(clipboard_cache[path], nil)
+		return
+	end
+
+	local mediainfo_executable = expand_path(user_opt.mediainfo_path)
+	local args = {mediainfo_executable}
+	if user_opt.verbose then
+		table.insert(args, "--Full")
+		msg.verbose("get_mediainfo_text_async: Verbose output enabled")
+	end
+	table.insert(args, path)
+
+	mp.osd_message("get_mediainfo_text_async: Copying MediaInfo to clipboard...", 2)
+
+	mp.command_native_async({
+		name = "subprocess",
+		args = args,
+		capture_stdout = true,
+		capture_stderr = true,
+	}, function(success, result, error)
+		if success and result.status == 0 then
+			local text_output = result.stdout
+			clipboard_cache[path] = text_output
+			callback(text_output, nil)
+		else
+			local error_msg = error or result.error_string or "Unknown error"
+			msg.error("get_mediainfo_text_async: mediainfo command failed: " .. error_msg)
+			callback(nil, "get_mediainfo_text_async: mediainfo command failed: " .. error_msg)
+		end
+	end)
+end
+
 local function update_osd()
 	if not overlay then
 		overlay = mp.create_osd_overlay("ass-events")
@@ -426,6 +475,19 @@ local function load_mediainfo()
 
 		if visible then
 			update_osd()
+		end
+	end)
+end
+
+local function copy2clipboard()
+	get_mediainfo_text_async(function(text, error)
+		if text then
+			mp.set_property("clipboard/text", text)
+			mp.osd_message("copy2clipboard: MediaInfo text copied", 2)
+			msg.info("copy2clipboard: MediaInfo text copied")
+		else
+			mp.osd_message("copy2clipboard: Error: " .. error, 3)
+			msg.error("copy2clipboard: " .. error)
 		end
 	end)
 end
@@ -504,6 +566,8 @@ local function on_file_loaded()
 	if current_path and current_path ~= new_path then
 		-- clear_cache(current_path) -- 只清理当前缓存
 		clear_cache()
+		clipboard_cache = {} -- 清空待粘贴文本的缓存
+		msg.verbose("on_file_loaded: cache cleared")
 	end
 	current_path = new_path
 
@@ -517,6 +581,7 @@ local function force_refresh()
 		local path = mp.get_property("path")
 		if path then
 			clear_cache(path)
+			clipboard_cache[path] = nil
 			is_fresh_load = true
 			load_mediainfo()
 		end
@@ -525,3 +590,4 @@ end
 
 mp.register_event("file-loaded", on_file_loaded)
 mp.add_key_binding(nil, "display_toggle", toggle_display)
+mp.add_key_binding(nil, "copy2clipboard", copy2clipboard)
