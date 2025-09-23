@@ -2,7 +2,7 @@
 ### 文档： https://github.com/hooke007/mpv_PlayKit/wiki/3_K7sfunc
 ##################################################
 
-__version__ = "0.8.13"
+__version__ = "0.8.14"
 
 __all__ = [
 	"FMT_CHANGE", "FMT_CTRL",
@@ -368,6 +368,9 @@ def DCF(
 
 	func_name = "DCF"
 	core.num_threads = vs_t
+
+	if not hasattr(core, "vszip") :
+		raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 vszip")
 
 	fmt_in = input.format.id
 	fmt_ref = ref.format.id
@@ -1625,9 +1628,8 @@ def RIFE_DML(
 	elif sc_mode == 2 :
 		if not hasattr(core, "mv") :
 			raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 mv")
-	if not (fps_num/fps_den).is_integer() :
-		if not hasattr(core, "akarin") :
-			raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 akarin")
+	if not hasattr(core, "akarin") :
+		raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 akarin")
 
 	#ext_proc = True
 	#t_tta = False
@@ -1765,9 +1767,8 @@ def RIFE_NV(
 	elif sc_mode == 2 :
 		if not hasattr(core, "mv") :
 			raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 mv")
-	if not (fps_num/fps_den).is_integer() :
-		if not hasattr(core, "akarin") :
-			raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 akarin")
+	if not hasattr(core, "akarin") :
+		raise ModuleNotFoundError(f"模块 {func_name} 依赖错误：缺失插件，检查项目 akarin")
 
 	#ext_proc = True
 	#t_tta = False
