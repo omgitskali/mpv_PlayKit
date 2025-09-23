@@ -14,13 +14,12 @@ local user_opt = {
 	key_scroll_down = "DOWN",
 	key_scroll_pgup = "PGUP",
 	key_scroll_pgdwn = "PGDWN",
-	key_refresh = "",
 
 	mediainfo_path = "MediaInfo",
 	verbose = false,
 	network = false,
 
-	font_mono = "Consolas",
+	font_mono = "_default",
 	font_size = 28,
 	font_size2 = 20,
 	font_size3 = 14,
@@ -80,7 +79,19 @@ local cache = {}
 local clipboard_cache = {}
 local current_path = nil
 local is_loading = false
-local is_fresh_load = true  -- Track if current data is freshly loaded
+local is_fresh_load = true
+
+local function detect_platform()
+	local platform = mp.get_property_native("platform")
+	if platform == "darwin" or platform == "windows" then
+		return platform
+	elseif os.getenv("WAYLAND_DISPLAY") or os.getenv("WAYLAND_SOCKET") then
+		return "wayland"
+	end
+	return "x11"
+end
+
+local platform = detect_platform()
 
 local sp_fields = {
 	["url"] = true,
@@ -99,6 +110,7 @@ local sp_fields = {
 }
 
 local path_fields = {
+	["Attachments"] = true,
 	["CompleteName"] = true,
 	["FolderName"] = true,
 	["FilePath"] = true,
@@ -143,6 +155,22 @@ end
 
 local function get_indent(level)
 	return string.rep("\\h", level * user_opt.indent_size)
+end
+
+local function get_font()
+	local font = user_opt.font_mono
+	if font == "_osd" then
+		return mp.get_property_native('options/osd-font')
+	elseif font == "_default" then
+		if platform == "windows" then
+			return "Consolas"
+		elseif platform == "darwin" then
+			return "Menlo"
+		end
+		return "monospace"
+	else
+		return font
+	end
 end
 
 local function get_font_size_for_field(key)
@@ -334,36 +362,6 @@ local function get_mediainfo_async(callback)
 		else
 			local error_msg = error or result.error_string or "Unknown error"
 			msg.error("get_mediainfo_async: mediainfo command failed: " .. error_msg)
-
-			-- 模式 --Full 失败时返回一般模式
-			if user_opt.verbose and not (success and result.status == 0) then
-				msg.warn("get_mediainfo_async: try std output")
-
-				args = {mediainfo_executable, "--Output=JSON", path}
-				mp.command_native_async({
-					name = "subprocess",
-					args = args,
-					capture_stdout = true,
-					capture_stderr = true,
-				}, function(success2, result2, error2)
-					is_loading = false
-
-					if success2 and result2.status == 0 then
-						local parsed = parse_mediainfo_json(result2.stdout)
-						if parsed then
-							-- Store in cache
-							cache[path] = parsed
-							callback(parsed, nil)
-						else
-							callback(nil, "get_mediainfo_async: JSON parse error")
-						end
-					else
-						callback(nil, error2 or result2.error_string or "get_mediainfo_async: get media info error")
-					end
-				end)
-			else
-				callback(nil, error_msg)
-			end
 		end
 	end)
 end
@@ -421,24 +419,27 @@ local function update_osd()
 		overlay = mp.create_osd_overlay("ass-events")
 	end
 
+	local font = get_font()
+	local font_size = user_opt.font_size
+
 	if is_loading then
-		overlay.data = "{\\rDefault\\an7\\b1\\bord1\\blur2\\fn" .. user_opt.font_mono .. "\\fs" .. user_opt.font_size .. "}" ..
+		overlay.data = "{\\rDefault\\an7\\b1\\bord1\\blur2\\fn" .. font .. "\\fs" .. font_size .. "}" ..
 						   "{\\b1}MediaInfo Tree{\\b0}\\N\\N" ..
 						   "{\\c&HFF66B2&}Loading ...{\\c&H0080FF&}"
 	elseif #all_lines == 0 then
-		overlay.data = "{\\fs" .. user_opt.font_size .. "}No media information available"
+		overlay.data = "{\\fs" .. font_size .. "}No media information available"
 	else
 		local visible_lines = {}
 		local start_line = scroll_offset + 1
 		local end_line = math.min(scroll_offset + user_opt.max_lines, #all_lines)
 
-		local header = "{\\fs" .. (user_opt.font_size + 2) .. "\\b1}MediaInfo Tree{\\b0\\fs" .. user_opt.font_size .. "}"
+		local header = "{\\fs" .. (font_size + 2) .. "\\b1}MediaInfo Tree{\\b0\\fs" .. font_size .. "}"
 		if #all_lines > user_opt.max_lines then
 			header = header .. "  {\\c&H808080&}[Lines " .. start_line .. "-" .. end_line .. " of " .. #all_lines .. "]{\\c&H0080FF&}"
 		end
 
 		if not is_fresh_load then
-			header = header .. "  {\\c&HFF8000&}[Cached]{\\c&H0080FF&}"
+			header = header .. "  {\\c&HA5C736&}[Cached]{\\c&H0080FF&}"
 		end
 
 		table.insert(visible_lines, header)
@@ -448,7 +449,7 @@ local function update_osd()
 			table.insert(visible_lines, all_lines[i])
 		end
 
-		overlay.data = "{\\rDefault\\an7\\b1\\bord1\\blur2\\fn" .. user_opt.font_mono .. "\\fs" .. user_opt.font_size .. "}" ..
+		overlay.data = "{\\rDefault\\an7\\b1\\bord1\\blur2\\fn" .. font .. "\\fs" .. font_size .. "}" ..
 						   table.concat(visible_lines, "\\N")
 	end
 
@@ -525,27 +526,21 @@ local function scroll(direction)
 end
 
 local function add_dy_bindings()
-	mp.add_forced_key_binding(user_opt.key_scroll_up, "stats_mediainfo_scroll_up", 
+	mp.add_forced_key_binding(user_opt.key_scroll_up, "osd_scroll_up", 
 		function() scroll("up") end, {repeatable = true})
-	mp.add_forced_key_binding(user_opt.key_scroll_down, "stats_mediainfo_scroll_down", 
+	mp.add_forced_key_binding(user_opt.key_scroll_down, "osd_scroll_down", 
 		function() scroll("down") end, {repeatable = true})
-	mp.add_forced_key_binding(user_opt.key_scroll_pgup, "stats_mediainfo_scroll_pgup", 
-		function() scroll("pgup") end)
-	mp.add_forced_key_binding(user_opt.key_scroll_pgdwn, "stats_mediainfo_scroll_pgdn", 
-		function() scroll("pgdwn") end)
-	if user_opt.key_refresh and user_opt.key_refresh ~= "" then
-		mp.add_forced_key_binding(user_opt.key_refresh, "stats_mediainfo_refresh", force_refresh)
-	end
+	mp.add_forced_key_binding(user_opt.key_scroll_pgup, "osd_scroll_pgup", 
+		function() scroll("pgup") end, {repeatable = true})
+	mp.add_forced_key_binding(user_opt.key_scroll_pgdwn, "osd_scroll_pgdwn", 
+		function() scroll("pgdwn") end, {repeatable = true})
 end
 
 local function remove_dy_bindings()
-	mp.remove_key_binding("stats_mediainfo_scroll_up")
-	mp.remove_key_binding("stats_mediainfo_scroll_down")
-	mp.remove_key_binding("stats_mediainfo_scroll_pgup")
-	mp.remove_key_binding("stats_mediainfo_scroll_pgdn")
-	if user_opt.key_refresh and user_opt.key_refresh ~= "" then
-		mp.remove_key_binding("stats_mediainfo_refresh")
-	end
+	mp.remove_key_binding("osd_scroll_up")
+	mp.remove_key_binding("osd_scroll_down")
+	mp.remove_key_binding("osd_scroll_pgup")
+	mp.remove_key_binding("osd_scroll_pgdwn")
 end
 
 local function toggle_display()
@@ -577,17 +572,22 @@ local function on_file_loaded()
 end
 
 local function force_refresh()
-	if visible then
-		local path = mp.get_property("path")
-		if path then
-			clear_cache(path)
-			clipboard_cache[path] = nil
-			is_fresh_load = true
+	local path = mp.get_property("path")
+	if path then
+		mp.osd_message("force_refresh: reloading", 1)
+		clear_cache(path)
+		clipboard_cache[path] = nil
+		is_fresh_load = true
+
+		if visible then
 			load_mediainfo()
 		end
+		msg.verbose("force_refresh: done")
 	end
 end
 
 mp.register_event("file-loaded", on_file_loaded)
+
 mp.add_key_binding(nil, "display_toggle", toggle_display)
 mp.add_key_binding(nil, "copy2clipboard", copy2clipboard)
+mp.add_key_binding(nil, "refresh", force_refresh)
