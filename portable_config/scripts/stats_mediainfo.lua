@@ -18,6 +18,7 @@ local user_opt = {
 	mediainfo_path = "MediaInfo",
 	verbose = false,
 	network = false,
+	prop = false,
 
 	font_mono = "_default",
 	font_size = 28,
@@ -35,9 +36,9 @@ if user_opt.load == false then
 	mp.msg.info("脚本已被初始化禁用")
 	return
 end
--- 原因：没测过更老掉牙的版本
+-- 原因：剪贴板
 local min_major = 0
-local min_minor = 36
+local min_minor = 40
 local min_patch = 0
 local mpv_ver_curr = mp.get_property_native("mpv-version", "unknown")
 local function incompat_check(full_str, tar_major, tar_minor, tar_patch)
@@ -394,7 +395,7 @@ local function get_mediainfo_text_async(callback)
 	end
 	table.insert(args, path)
 
-	mp.osd_message("get_mediainfo_text_async: Copying MediaInfo to clipboard...", 2)
+	mp.osd_message("MediaInfo: Copying text to clipboard ...", 2)
 
 	mp.command_native_async({
 		name = "subprocess",
@@ -456,6 +457,25 @@ local function update_osd()
 	overlay:update()
 end
 
+local function update_user_prop()
+	local path = mp.get_property("path")
+	if not path then
+		mp.del_property("user-data/mediainfo")
+		return
+	end
+	if cache[path] then
+		mp.set_property_native("user-data/mediainfo", cache[path])
+		return
+	end
+	get_mediainfo_async(function(info)
+		if info then
+			mp.set_property_native("user-data/mediainfo", info)
+		else
+			mp.set_property_native("user-data/mediainfo", nil)
+		end
+	end)
+end
+
 local function load_mediainfo()
 	all_lines = {}
 	scroll_offset = 0
@@ -478,16 +498,21 @@ local function load_mediainfo()
 			update_osd()
 		end
 	end)
+
+	if user_opt.prop then
+		update_user_prop()
+	end
+
 end
 
 local function copy2clipboard()
 	get_mediainfo_text_async(function(text, error)
 		if text then
 			mp.set_property("clipboard/text", text)
-			mp.osd_message("copy2clipboard: MediaInfo text copied", 2)
+			mp.osd_message("MediaInfo: Text copied", 2)
 			msg.info("copy2clipboard: MediaInfo text copied")
 		else
-			mp.osd_message("copy2clipboard: Error: " .. error, 3)
+			mp.osd_message("MediaInfo: Error: " .. error, 3)
 			msg.error("copy2clipboard: " .. error)
 		end
 	end)
@@ -558,36 +583,39 @@ end
 
 local function on_file_loaded()
 	local new_path = mp.get_property("path")
+	local pp = user_opt.prop
 	if current_path and current_path ~= new_path then
-		-- clear_cache(current_path) -- 只清理当前缓存
 		clear_cache()
 		clipboard_cache = {} -- 清空待粘贴文本的缓存
 		msg.verbose("on_file_loaded: cache cleared")
 	end
 	current_path = new_path
 
-	if visible then
+	if visible or pp then
 		load_mediainfo()
 	end
 end
 
-local function force_refresh()
-	local path = mp.get_property("path")
-	if path then
-		mp.osd_message("force_refresh: reloading", 1)
-		clear_cache(path)
-		clipboard_cache[path] = nil
-		is_fresh_load = true
-
-		if visible then
-			load_mediainfo()
-		end
-		msg.verbose("force_refresh: done")
+local function on_file_end()
+	if user_opt.prop then
+		update_user_prop()
 	end
 end
 
+local function force_refresh()
+	clear_cache()
+	clipboard_cache = {}
+	is_fresh_load = true
+	load_mediainfo()
+	msg.verbose("force_refresh: done")
+end
+
 mp.register_event("file-loaded", on_file_loaded)
+mp.register_event("end-file", on_file_end)
 
 mp.add_key_binding(nil, "display_toggle", toggle_display)
 mp.add_key_binding(nil, "copy2clipboard", copy2clipboard)
-mp.add_key_binding(nil, "refresh", force_refresh)
+mp.add_key_binding(nil, "refresh", function()
+	mp.osd_message("MediaInfo: Reloading ...", 1)
+	force_refresh()
+end)
