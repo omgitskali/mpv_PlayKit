@@ -11,15 +11,27 @@ LICENSE:
 
 //!PARAM STR
 //!TYPE float
-//!MINIMUM 1.0
+//!MINIMUM 0.0
 //!MAXIMUM 16.0
-2.0
+4.0
 
-//!PARAM ET
+//!PARAM ET1
 //!TYPE float
 //!MINIMUM 0.0
 //!MAXIMUM 16.0
-12.0
+2.0
+
+//!PARAM ET2
+//!TYPE float
+//!MINIMUM 0.0
+//!MAXIMUM 16.0
+8.0
+
+//!PARAM SENS
+//!TYPE float
+//!MINIMUM 0.0
+//!MAXIMUM 1.0
+0.8
 
 
 //!HOOK POSTKERNEL
@@ -28,26 +40,14 @@ LICENSE:
 //!DESC [QCOM_SGEDS_ms_RT]
 //!WHEN HOOKED.w PREKERNEL.w > HOOKED.h PREKERNEL.h > * STR *
 
-#define CORE 2
-#define SMTH 1
 #define UseEdgeDirection 1
+#define SMTH 1
 
-float weight_core(float x)
-{
-#if (CORE == 1)
-	float wA = x-4.0;
-	float wB = x*wA-wA;
+float fastLanczos2(float x) {
+	float wA = x - 4.0;
+	float wB = x * wA - wA;
 	wA *= wA;
-	return wB*wA;
-#else
-	float dist = sqrt(abs(x));
-	if (dist < 1.0) {
-		return 1.0 + dist * dist * (1.5 * dist - 2.5);
-	} else if (dist < 2.0) {
-		return 2.0 + dist * (-4.0 + dist * (2.5 - 0.5 * dist));
-	}
-	return 0.0;
-#endif
+	return wB * wA;
 }
 
 #if (UseEdgeDirection == 1)
@@ -65,33 +65,27 @@ vec2 weightY(float dx, float dy, float c, float data)
 	float x = (((dx*dx)+(dy*dy))+((edgeDis*edgeDis)*((clamp(((c*c)*std),0.0,1.0)*0.7)+-1.0)));
 #else
 	float std = data;
-	#if (CORE == 1)
 	float x = ((dx*dx)+(dy* dy))* 0.55 + clamp(abs(c)*std, 0.0, 1.0);
-	#else
-	float x = ((dx*dx)+(dy* dy)) + clamp(abs(c)*std, 0.0, 1.0);
-	#endif
 #endif
 
-	float w = weight_core(x);
+	float w = fastLanczos2(x);
 	return vec2(w, w * c);
 }
 
-vec2 edgeDirection(vec4 left, vec4 right)
-{
+vec2 edgeDirection(vec4 left, vec4 right) {
 	vec2 dir;
 	float RxLz = (right.x + (-left.z));
 	float RwLy = (right.w + (-left.y));
 	vec2 delta;
 	delta.x = (RxLz + RwLy);
 	delta.y = (RxLz + (-RwLy));
-	float lengthInv = inversesqrt((delta.x * delta.x+ 3.075740e-05) + (delta.y * delta.y));
+	float lengthInv = inversesqrt((delta.x * delta.x + 3.075740e-05) + (delta.y * delta.y));
 	dir.x = (delta.x * lengthInv);
 	dir.y = (delta.y * lengthInv);
 	return dir;
 }
 
-vec4 hook()
-{
+vec4 hook() {
 
 	vec4 color = HOOKED_texOff(vec2(0.0));
 
@@ -104,24 +98,62 @@ vec4 hook()
 
 	float edgeVote = abs(left.z - left.y) + abs(color.g - left.y) + abs(color.g - left.z);
 
-#if (SMTH == 1)
-	float threshold = ET / 255.0;
-	float transition_width = threshold * 0.5;
-	float lower_bound = threshold - transition_width;
-	float upper_bound = threshold + transition_width;
-	float sharp_factor = smoothstep(lower_bound, upper_bound, edgeVote);
+	bool should_sharpen = false;
+	#if (SMTH == 1)
+	vec4 extra1 = PREKERNEL_texOff(vec2( 1.0,  0.0));
+	vec4 extra2 = PREKERNEL_texOff(vec2(-1.0,  0.0));
+	vec4 extra3 = PREKERNEL_texOff(vec2( 0.0,  1.0));
+	vec4 extra4 = PREKERNEL_texOff(vec2( 0.0, -1.0));
 
-	if (sharp_factor > 0.0)
+	edgeVote += abs(extra1.g - color.g) * 0.5;
+	edgeVote += abs(extra2.g - color.g) * 0.5;
+	edgeVote += abs(extra3.g - color.g) * 0.5;
+	edgeVote += abs(extra4.g - color.g) * 0.5;
+	edgeVote /= 5.0;
+
+	float threshold_low = ET1 / 255.0;
+	float threshold_high = max(ET1, ET2) / 255.0;
+	float sharp_factor = smoothstep(threshold_low, threshold_high, edgeVote);
+
+	float texture_factor = 1.0;
+	if (sharp_factor > 0.01) {
+		vec4 neighbors[9];
+		neighbors[0] = PREKERNEL_texOff(vec2(-1.0, -1.0));
+		neighbors[1] = PREKERNEL_texOff(vec2( 0.0, -1.0));
+		neighbors[2] = PREKERNEL_texOff(vec2( 1.0, -1.0));
+		neighbors[3] = PREKERNEL_texOff(vec2(-1.0,  0.0));
+		neighbors[4] = color;
+		neighbors[5] = PREKERNEL_texOff(vec2( 1.0,  0.0));
+		neighbors[6] = PREKERNEL_texOff(vec2(-1.0,  1.0));
+		neighbors[7] = PREKERNEL_texOff(vec2( 0.0,  1.0));
+		neighbors[8] = PREKERNEL_texOff(vec2( 1.0,  1.0));
+		
+		float avg = 0.0;
+		for(int i = 0; i < 9; i++) avg += neighbors[i].g;
+		avg /= 9.0;
+		
+		float variance = 0.0;
+		for(int i = 0; i < 9; i++) {
+			float diff = neighbors[i].g - avg;
+			variance += diff * diff;
+		}
+		variance /= 9.0;
+
+		texture_factor = 1.0 - smoothstep(0.0005, 0.008, variance) * SENS;
+	}
+
+	if (sharp_factor > 0.01) { should_sharpen = true; }
 #else
-	if(edgeVote > (ET / 255.0))
+	if (edgeVote > (ET1 / 255.0)) { should_sharpen = true; }
 #endif
-	{
+
+	if (should_sharpen) {
 		gather_coord.x += PREKERNEL_pt.x;
 
 		vec4 right = PREKERNEL_gather(gather_coord + vec2(PREKERNEL_pt.x, 0.0), 1);
 		vec4 upDown;
 		upDown.xy = PREKERNEL_gather(gather_coord + vec2(0.0, -PREKERNEL_pt.y), 1).wz;
-		upDown.zw = PREKERNEL_gather(gather_coord + vec2(0.0, PREKERNEL_pt.y), 1).yx;
+		upDown.zw = PREKERNEL_gather(gather_coord + vec2(0.0,  PREKERNEL_pt.y), 1).yx;
 
 		float mean = (left.y+left.z+right.x+right.w)*0.25;
 
@@ -134,39 +166,43 @@ vec4 hook()
 		float sumMean = 1.014185e+01 / sum;
 		float std = (sumMean*sumMean);
 
-#if (UseEdgeDirection == 1)
+		#if (UseEdgeDirection == 1)
 		vec3 data = vec3(std, edgeDirection(left, right));
-#else
+		#else
 		float data = std;
-#endif
+		#endif
 		vec2 aWY = weightY(pl.x, pl.y+1.0, upDown.x, data);
 		aWY += weightY(pl.x-1.0, pl.y+1.0, upDown.y, data);
 		aWY += weightY(pl.x-1.0, pl.y-2.0, upDown.z, data);
-		aWY += weightY(pl.x, pl.y-2.0, upDown.w, data);
-		aWY += weightY(pl.x+1.0, pl.y-1.0, left.x, data);
-		aWY += weightY(pl.x, pl.y-1.0, left.y, data);
-		aWY += weightY(pl.x, pl.y, left.z, data);
-		aWY += weightY(pl.x+1.0, pl.y, left.w, data);
-		aWY += weightY(pl.x-1.0, pl.y-1.0, right.x, data);
-		aWY += weightY(pl.x-2.0, pl.y-1.0, right.y, data);
-		aWY += weightY(pl.x-2.0, pl.y, right.z, data);
-		aWY += weightY(pl.x-1.0, pl.y, right.w, data);
+		aWY += weightY(pl.x,     pl.y-2.0, upDown.w, data);
+		aWY += weightY(pl.x+1.0, pl.y-1.0, left.x,   data);
+		aWY += weightY(pl.x,     pl.y-1.0, left.y,   data);
+		aWY += weightY(pl.x,     pl.y,     left.z,   data);
+		aWY += weightY(pl.x+1.0, pl.y,     left.w,   data);
+		aWY += weightY(pl.x-1.0, pl.y-1.0, right.x,  data);
+		aWY += weightY(pl.x-2.0, pl.y-1.0, right.y,  data);
+		aWY += weightY(pl.x-2.0, pl.y,     right.z,  data);
+		aWY += weightY(pl.x-1.0, pl.y,     right.w,  data);
 
-		float finalY = aWY.y/aWY.x;
-		float maxY = max(max(left.y,left.z),max(right.x,right.w));
-		float minY = min(min(left.y,left.z),min(right.x,right.w));
-		float deltaY = clamp(STR*finalY, minY, maxY) - color.w;
+		float finalY = aWY.y / aWY.x;
+		float maxY = max(max(left.y, left.z), max(right.x, right.w));
+		float minY = min(min(left.y, left.z), min(right.x, right.w));
 
-#if (SMTH == 1)
-		deltaY = clamp(deltaY, -17.0 / 255.0, 17.0 / 255.0);
-		deltaY *= sharp_factor;
-#else
+		#if (SMTH == 1)
+		float adaptive_str = STR * texture_factor;
+		float deltaY = clamp(adaptive_str * finalY, minY, maxY) - color.w;
+
+		deltaY = clamp(deltaY, -12.0 / 255.0, 12.0 / 255.0);
+		deltaY *= sharp_factor * sharp_factor;
+		#else
+		float deltaY = clamp(STR * finalY, minY, maxY) - color.w;
+
 		deltaY = clamp(deltaY, -23.0 / 255.0, 23.0 / 255.0);
-#endif
+		#endif
 
-		color.r = clamp((color.r+deltaY),0.0,1.0);
-		color.g = clamp((color.g+deltaY),0.0,1.0);
-		color.b = clamp((color.b+deltaY),0.0,1.0);
+		color.r = clamp((color.r+deltaY), 0.0, 1.0);
+		color.g = clamp((color.g+deltaY), 0.0, 1.0);
+		color.b = clamp((color.b+deltaY), 0.0, 1.0);
 	}
 
 	color.a = 1.0;
