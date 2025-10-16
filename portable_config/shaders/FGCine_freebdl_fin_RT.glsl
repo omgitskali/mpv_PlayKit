@@ -15,7 +15,7 @@
 100.0
 
 
-//!HOOK MAIN
+//!HOOK OUTPUT
 //!BIND HOOKED
 //!BIND MPVLUT1
 //!BIND MPVLUT2
@@ -25,7 +25,7 @@
 //!BIND MPVLUT6
 //!BIND MPVLUT7
 //!BIND MPVLUT8
-//!DESC [FGCine_freebdl_RT]
+//!DESC [FGCine_freebdl_fin_RT]
 //!WHEN STR
 
 vec4 hook(){

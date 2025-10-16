@@ -8,10 +8,10 @@
 100.0
 
 
-//!HOOK MAIN
+//!HOOK OUTPUT
 //!BIND HOOKED
 //!BIND MPVLUT1
-//!DESC [Krell_pinkgirl_RT]
+//!DESC [Krell_pinkgirl_fin_RT]
 //!WHEN STR
 
 vec4 hook(){
