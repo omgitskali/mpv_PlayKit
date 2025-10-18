@@ -51,7 +51,6 @@
 
 //!PARAM ALGO
 //!TYPE DEFINE
-//!DESC int
 //!MINIMUM 1
 //!MAXIMUM 2
 1

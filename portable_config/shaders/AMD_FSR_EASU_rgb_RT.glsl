@@ -24,7 +24,6 @@
 
 //!PARAM ALPHA
 //!TYPE DEFINE
-//!DESC int
 //!MINIMUM 0
 //!MAXIMUM 1
 1

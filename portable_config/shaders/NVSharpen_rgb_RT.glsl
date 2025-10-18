@@ -31,7 +31,6 @@
 0.25
 
 //!PARAM PQ
-//!DESC int
 //!TYPE DEFINE
 //!MINIMUM 0
 //!MAXIMUM 1

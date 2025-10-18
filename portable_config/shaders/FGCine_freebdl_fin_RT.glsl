@@ -3,7 +3,6 @@
 
 //!PARAM CLUT
 //!TYPE DEFINE
-//!DESC int
 //!MINIMUM 1
 //!MAXIMUM 8
 1

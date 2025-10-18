@@ -24,14 +24,12 @@
 
 //!PARAM TAPS_scale
 //!TYPE DEFINE
-//!DESC int
 //!MINIMUM 0
 //!MAXIMUM 1
 0
 
 //!PARAM TAPS_cscale
 //!TYPE DEFINE
-//!DESC int
 //!MINIMUM 0
 //!MAXIMUM 1
 0

@@ -8,7 +8,6 @@
 1
 
 //!PARAM MODE
-//!DESC int
 //!TYPE DEFINE
 //!MINIMUM 1
 //!MAXIMUM 2

@@ -15,7 +15,6 @@
 
 //!PARAM GRAIN
 //!TYPE DEFINE
-//!DESC int
 //!MINIMUM 1
 //!MAXIMUM 2
 1
