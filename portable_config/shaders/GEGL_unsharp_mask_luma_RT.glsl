@@ -29,6 +29,12 @@ LICENSE:
 //!MAXIMUM 1.0
 0.0
 
+//!PARAM MODE
+//!TYPE DEFINE
+//!MINIMUM 1
+//!MAXIMUM 3
+1
+
 
 //!HOOK LUMA
 //!BIND HOOKED
@@ -83,6 +89,9 @@ vec4 hook() {
 	}
 	blurred_luma /= weight_sum;
 
+#if (MODE == 3)
+	return vec4(blurred_luma, original_color.g, original_color.b, original_color.a);
+#else
 	float mask = original_luma - blurred_luma;
 	float final_mask = mask;
 
@@ -106,9 +115,15 @@ vec4 hook() {
 		soft_mask /= aa_weight_sum;
 		final_mask = mask * soft_mask;
 	}
+#endif
 
-	float sharpened_luma = original_luma + final_mask * AMT;
-	return vec4(sharpened_luma, original_color.g, original_color.b, original_color.a);
+#if (MODE == 1)
+	float final_luma = original_luma + final_mask * AMT;
+	return vec4(final_luma, original_color.g, original_color.b, original_color.a);
+#elif (MODE == 2)
+	float final_luma = original_luma - final_mask * AMT;
+	return vec4(final_luma, original_color.g, original_color.b, original_color.a);
+#endif
 
 }
 

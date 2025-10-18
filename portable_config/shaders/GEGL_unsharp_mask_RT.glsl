@@ -29,6 +29,12 @@ LICENSE:
 //!MAXIMUM 1.0
 0.0
 
+//!PARAM MODE
+//!TYPE DEFINE
+//!MINIMUM 1
+//!MAXIMUM 3
+1
+
 
 //!HOOK MAIN
 //!BIND HOOKED
@@ -80,6 +86,9 @@ vec4 hook() {
 	}
 	blurred_color /= weight_sum;
 
+#if (MODE == 3)
+	return vec4(blurred_color.rgb, original_color.a);
+#else
 	vec3 mask = original_color.rgb - blurred_color.rgb;
 	vec3 final_mask = mask;
 
@@ -103,9 +112,15 @@ vec4 hook() {
 		soft_mask /= aa_weight_sum;
 		final_mask = mask * soft_mask;
 	}
+#endif
 
-	vec3 sharpened_color = original_color.rgb + final_mask * AMT;
-	return vec4(sharpened_color, original_color.a);
+#if (MODE == 1)
+	vec3 final_color = original_color.rgb + final_mask * AMT;
+	return vec4(final_color, original_color.a);
+#elif (MODE == 2)
+	vec3 final_color = original_color.rgb - final_mask * AMT;
+	return vec4(final_color, original_color.a);
+#endif
 
 }
 
