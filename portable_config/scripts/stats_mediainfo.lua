@@ -10,6 +10,7 @@ mp.utils = require "mp.utils"
 
 local user_opt = {
 	load = true,
+
 	key_scroll_up = "UP",
 	key_scroll_down = "DOWN",
 	key_scroll_pgup = "PGUP",
