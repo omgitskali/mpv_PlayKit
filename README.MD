@@ -1,7 +1,7 @@
 # mpv_Playkit
 
 From a newbie to a pro, <s>what seemed troublesome before turned out to be delightful after all</s>
-```[Command-line player mpv](https://github.com/mpv-player/mpv) Settings History Archive (Windows 10/11)```
+[Command-line player mpv](https://github.com/mpv-player/mpv) Settings History Archive (Windows 10/11)
 
 Go to the [**📖Wiki Section📖**](../../wiki) above to view the documentation navigation and descriptions of the files in the subdirectories
 
